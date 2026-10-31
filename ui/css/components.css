@@ -112,6 +112,22 @@
 @media (prefers-reduced-motion:reduce){
   .modal-overlay, .modal-overlay.open, .modal-box, .modal-overlay.open .modal-box{transition:none;}
 }
+/* 初回の案内(components/onboarding.js)。長い内容なので、上(タイトル)と下(ボタン)は固定して、真ん中だけがスクロールする。
+   高さの上限は、.modal-box の max-height(dvh)がそのまま効く */
+.modal-box.onb{max-width:480px; display:flex; flex-direction:column; overflow:hidden; padding:0;}
+.onb-head{position:relative; padding:22px 48px 14px 22px; border-bottom:1px solid var(--line); flex:none;}
+.onb-head .modal-title{margin:0;}
+.onb-lead{font-size:12px; color:var(--ink-sub); line-height:1.7; margin-top:6px;}
+.onb-body{flex:1; min-height:0; overflow-y:auto; padding:2px 22px;}
+.onb-sec{padding:14px 0; border-bottom:1px solid var(--line);}
+.onb-sec:last-child{border-bottom:none;}
+.onb-h{font-size:13px; font-weight:700; margin:0 0 6px; color:var(--ink);}
+.onb-t{font-size:12px; line-height:1.8; color:var(--ink-sub); overflow-wrap:anywhere;}
+.onb-t b{color:var(--ink);}
+.onb-steps{margin:0; padding-left:1.5em;}
+.onb-act{margin-top:10px;}
+.onb-foot{padding:14px 22px 22px; border-top:1px solid var(--line); flex:none;}
+.onb-foot .btn{width:100%;}
 .modal-box.danger{border-color:var(--stamp);}
 .modal-close{position:absolute; top:10px; right:12px; background:none; border:none; font-size:15px;
   color:var(--ink-sub); cursor:pointer; font-family:var(--font-mono);}

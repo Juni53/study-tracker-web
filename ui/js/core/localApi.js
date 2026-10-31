@@ -31,6 +31,7 @@ export const WEB_ONLY_METHODS = [
   "request_notification_permission", "get_storage_info", "reload_app",
   "get_backup_status", "save_backup", "set_backup_interval", "snooze_backup_reminder",
   "pick_backup_file", "apply_backup", "undo_last_restore",
+  "get_onboarding", "complete_onboarding",
 ];
 
 export class NotPortedError extends Error {
@@ -241,6 +242,22 @@ export class Api {
   set_idle_inhibit(on) { return this.platform.setWakeLock(on); }
   // 通知の許可を求める(ユーザーの操作の直後に呼ぶ)。Web 版だけの API。
   async request_notification_permission() { return { permission: await this.platform.requestNotificationPermission() }; }
+
+  // ── 初回起動時の案内(Web 版だけの API) ──
+  // 「案内を見たか」は、設定(settings.json)ではなく、バックアップの対象外の「メタ情報」に持つ
+  // (settings.json に足すと、Python 版との保存内容の照合がずれる)。バックアップに含まれないので、
+  // 別の端末で復元しても、その端末では初回の案内が出る。全データ削除ではメタ情報も消えるので、もう一度出る。
+  get_onboarding() {
+    const o = this.store.getMeta("onboarding", null);
+    const at = o && typeof o.seen_at === "string" ? o.seen_at : null;
+    // volatile: 保存できない環境(プライベートモードなど)。「このブラウザの中に保存されます」という案内が事実と違うので、出さない
+    return { done: at !== null, seen_at: at, volatile: !!this.store.volatile };
+  }
+  // 案内を閉じたときに呼ぶ。2回目以降は、最初に見た日時を残す。
+  complete_onboarding() {
+    if (!this.get_onboarding().done) this.store.setMeta("onboarding", { seen_at: nowIsoSeconds() });
+    return { ok: true };
+  }
 
   // ── 完全バックアップ・復元(Web 版だけの API) ──
   // リマインダーの設定(周期・最後のバックアップ・延期)は、バックアップの対象外の「メタ情報」に持つ。

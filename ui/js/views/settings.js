@@ -3,11 +3,12 @@ import { applyTheme } from "../app.js";
 import { mountPoints } from "../components/points.js";
 import { showAlert, showConfirm, showChoice } from "../components/dialog.js";
 import { showToast } from "../components/celebrate.js";
-import { expandIn, collapseOut, finished, growIn, shrinkOut, captureRects, playFlip } from "../components/motion.js";
+import { expandIn, collapseOut, finished, growIn, shrinkOut, captureRects, playFlip, reduceMotion } from "../components/motion.js";
 import { bindDisclosure } from "../components/disclosure.js";
 import { bindRadioGroup } from "../components/radioGroup.js";
 import { BUILD_ID, checkNow, isPwaActive } from "../pwa.js";
-import { canInstall, promptInstall, isStandalone, isIos, onInstallStateChange } from "../components/install.js";
+import { canInstall, promptInstall, isStandalone, installHowTo, onInstallStateChange } from "../components/install.js";
+import { showOnboarding } from "../components/onboarding.js";
 import { makeSortable } from "../components/sortable.js";
 import { createFormError } from "../components/formError.js";
 import { validateTagName } from "../components/validate.js";
@@ -73,7 +74,7 @@ export async function render(root, api) {
       <div id="tagList"></div>
     </div>
 
-    <div class="sect">
+    <div class="sect" id="dataSect">
       <div class="sect-lbl">データ管理</div>
       <div class="data-actions">
         <div class="data-note">完全バックアップ(記録・ポイント・設定など、すべてのデータ)</div>
@@ -105,6 +106,7 @@ export async function render(root, api) {
       <div class="sect-lbl">このアプリについて</div>
       <div class="about">バージョン <b>v3.0.0</b> <span class="mono" id="buildId"></span></div>
       <div class="about" id="installRow"></div>
+      <div class="about"><button class="btn muted small" id="onboardingBtn">はじめに(使い方の案内)を見る</button></div>
       <div class="about" id="updateRow" hidden><button class="btn muted small" id="updateCheckBtn">最新版を確認</button> <span id="updateResult"></span></div>
     </div>
 
@@ -493,12 +495,14 @@ export async function render(root, api) {
       installRow.querySelector("#installBtn").addEventListener("click", async () => { await promptInstall(); paintInstall(); });
       return;
     }
-    installRow.textContent = isIos()
-      ? "インストールするには、Safari の共有ボタンから「ホーム画面に追加」を選びます。"
-      : "インストールするには、Chrome / Edge のアドレスバーの右にある、インストールのアイコンを使います。";
+    installRow.textContent = installHowTo();
   }
   paintInstall();
   onInstallStateChange(paintInstall);
+  // 初回に出る案内を、いつでも見直せる(見たことの記録は変えない)。「データ管理を開く」は、このページの中で移る
+  root.querySelector("#onboardingBtn").addEventListener("click", () => {
+    showOnboarding(api, { first: false, onOpenBackup: () => root.querySelector("#dataSect")?.scrollIntoView?.({ block: "start", behavior: reduceMotion() ? "auto" : "smooth" }) });
+  });
   if (isPwaActive()) {
     root.querySelector("#updateRow").hidden = false;
     const result = root.querySelector("#updateResult");

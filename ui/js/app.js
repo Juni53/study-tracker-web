@@ -6,6 +6,7 @@ import { stopwatch, subscribe } from "./store/stopwatch.js";
 import { loadPrefs } from "./store/pomodoroPrefs.js";
 import { startAlerts, refreshInhibit } from "./store/pomodoroAlerts.js";
 import { showBackupBannerIfDue } from "./components/backupBanner.js";
+import { showOnboardingIfFirst } from "./components/onboarding.js";
 import { initInputMode } from "./components/inputMode.js";
 import { initInstall } from "./components/install.js";
 import { initPwa } from "./pwa.js";
@@ -142,6 +143,12 @@ export async function navigate(key) {
   }
 }
 
+// 案内の「データ管理を開く」: 設定タブを開いて、データ管理の項目まで移る
+async function openDataManagement() {
+  await navigate("settings");
+  document.getElementById("dataSect")?.scrollIntoView?.({ block: "start", behavior: reduceMotion() ? "auto" : "smooth" });
+}
+
 // ── レイアウト(折りたたみ / 自動アイコンレール) ──
 let collapsed = false;
 let lastLayout = null;
@@ -241,8 +248,13 @@ initInputMode();
 initInstall();
 initPwa();
 loadPrefs(api).then(refreshInhibit);
-// バックアップのリマインダー(周期がたっていれば、右下に小さく出す。起動時に1回だけ)
-showBackupBannerIfDue(api);
+// 起動時のお知らせ: 初めてのときは、先に「はじめに」の案内を出し、閉じたあとで、バックアップのリマインダーを出す
+// (周期がたっていれば、右下に小さく出す。起動時に1回だけ。案内の上に重ならないようにする)。
+// 案内が出せなくても、リマインダーとアプリ本体は動く。
+(async () => {
+  try { await showOnboardingIfFirst(api, { onOpenBackup: openDataManagement }); } catch (e) { console.error("案内を出せませんでした", e); }
+  showBackupBannerIfDue(api);
+})();
 
 buildNav();
 applyLayout();

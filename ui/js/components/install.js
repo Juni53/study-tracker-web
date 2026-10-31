@@ -21,6 +21,13 @@ export async function promptInstall() {
   return { outcome: choice.outcome };       // "accepted" / "dismissed"
 }
 
+// ブラウザからの「インストールできます」の合図が無いときの、手順の案内(設定ページと初回の案内で、同じ文を使う)
+export function installHowTo(win = globalThis) {
+  return isIos(win)
+    ? "インストールするには、Safari の共有ボタンから「ホーム画面に追加」を選びます。"
+    : "インストールするには、Chrome / Edge のアドレスバーの右にある、インストールのアイコンを使います。";
+}
+
 // すでにアプリとして開いているか(インストール済みの画面)
 export function isStandalone(win = globalThis) {
   const mm = win.matchMedia ? win.matchMedia("(display-mode: standalone)") : null;

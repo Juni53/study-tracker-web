@@ -6,6 +6,7 @@ import { isTouchInput } from "../components/inputMode.js";
 import { mountPoints } from "../components/points.js";
 import { slideIn, slideOut, finished } from "../components/motion.js";
 import { createCalTip, buildTipParts } from "../components/calTip.js";
+import { clock } from "../core/dates.js";
 
 const WEEK_START = 0;               // 0 = 日曜始まり(デザイン案どおり) / 1 = 月曜始まり
 const HEAT_STEPS = [60, 120, 180];  // 分。濃さ1: 0〜1h未満 / 2: 〜2h未満 / 3: 〜3h未満 / 4: 3h以上
@@ -29,7 +30,7 @@ export function onLeave() {
 
 const pad2 = (n) => String(n).padStart(2, "0");
 function todayIso() {
-  const d = new Date();
+  const d = clock.now();
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 function fmtHM(min) {
@@ -82,7 +83,7 @@ export async function render(root, api) {
   const token = ++viewToken;
   teardown();
 
-  const now0 = new Date();
+  const now0 = clock.now();
   let year = now0.getFullYear();
   let month = now0.getMonth() + 1;
   let data = null;
@@ -185,7 +186,7 @@ export async function render(root, api) {
 
   function paintStreak(d) {
     const s = d.streak;
-    const todayY = new Date().getFullYear();
+    const todayY = clock.now().getFullYear();
     const sabori = s.sabori_dates.length
       ? ` ・ さぼり券使用: ${s.sabori_dates.map((x) => fmtDate(x, todayY)).join(", ")}`
       : "";
@@ -237,7 +238,7 @@ export async function render(root, api) {
   }
 
   function paintGoal(d) {
-    const t = new Date();
+    const t = clock.now();
     const isCurrent = d.year === t.getFullYear() && d.month === t.getMonth() + 1;
     const done = d.summary.total_min;
     const goal = d.goal.goal_min;
@@ -315,7 +316,7 @@ export async function render(root, api) {
   function openDay(iso) {
     const day = data.days[iso] || {};
     const [y, m, dd] = iso.split("-").map(Number);
-    $p("#calPopTitle").textContent = y === new Date().getFullYear() ? `${m}月${dd}日` : `${y}年${m}月${dd}日`;
+    $p("#calPopTitle").textContent = y === clock.now().getFullYear() ? `${m}月${dd}日` : `${y}年${m}月${dd}日`;
 
     const recs = day.records || [];
     $p("#calPopTotal").textContent = recs.length ? `合計 ${fmtHM(day.minutes)} ・ +${day.points.toFixed(1)}P` : "";
@@ -355,7 +356,7 @@ export async function render(root, api) {
   $("#calPrev").addEventListener("click", () => shiftMonth(-1));
   $("#calNext").addEventListener("click", () => shiftMonth(1));
   $("#calToday").addEventListener("click", () => {
-    const t = new Date();
+    const t = clock.now();
     const y = t.getFullYear(), m = t.getMonth() + 1;
     if (y === year && m === month) return; // すでに今月を表示中なら、何も起きない
     const dir = (y * 12 + m) > (year * 12 + month) ? 1 : -1; // 今月が、表示中の月より先か前か

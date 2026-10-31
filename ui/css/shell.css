@@ -3,9 +3,11 @@
 /* サイドバーの開閉は、幅・余白・文字の出入りを transition で伸縮させる(幅は grid ではなく flex で持つ:
    grid-template-columns の transition は古い WebView では動かないため) */
 :root{--nav-ease:cubic-bezier(.4, 0, .2, 1);}
-.app{display:flex; min-height:100vh;}
+/* 高さは dvh(ブラウザの上下のバーが出入りしても、実際に見えている高さに追従する)。
+   dvh を知らない古いブラウザは 2 行目を読み飛ばすので、1 行目の vh のまま動く */
+.app{display:flex; min-height:100vh; min-height:100dvh;}
 .nav{background:var(--paper2); display:flex; flex-direction:column; position:sticky; top:0; align-self:flex-start;
-  height:100vh; width:183px; flex:none; overflow:hidden; padding:16px 0 12px; z-index:10;
+  height:100vh; height:100dvh; width:183px; flex:none; overflow:hidden; padding:16px 0 12px; z-index:10;
   transition:width .3s var(--nav-ease), padding .3s var(--nav-ease);}
 .brand{display:flex; align-items:center; gap:10px; padding:0 16px 16px;
   transition:padding .3s var(--nav-ease), gap .3s var(--nav-ease);}

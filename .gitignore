@@ -1,0 +1,6 @@
+node_modules/
+# 実データ(勉強の記録など)は、公開リポジトリに入れない
+study_tracker_desktop_data_*.json
+tests/golden/local/
+# 公開用のビルド(node tools/build-pwa.mjs で作る)
+dist/

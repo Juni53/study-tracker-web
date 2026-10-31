@@ -1,0 +1,588 @@
+/* Study Tracker v3 - タブごとのレイアウト(共通部品に入らない、そのタブ固有のもの) */
+
+/* ===== ホーム ===== */
+.grid-top{display:grid; grid-template-columns:150px 1fr; border-bottom:1px solid var(--line);}
+.streak-box{border-right:1px solid var(--line); padding:16px 14px; display:flex; flex-direction:column; justify-content:center; gap:4px;}
+.streak-box .lbl2{font-size:11px; color:var(--ink-sub);}
+.streak-box .num{font-size:44px; font-weight:700; line-height:1;}
+.streak-box .num span{font-size:16px; color:var(--ink-sub);}
+.streak-box .status{font-size:11px; color:var(--stamp); display:flex; align-items:flex-start; gap:6px; margin-top:6px;}
+.streak-box .status .dot{margin-top:.42em;} /* 1行目の文字の高さに、ドットを合わせる */
+/* 連続記録が途切れているときは、文字もドットも灰色にする(朱色は「いま行動が必要」の合図なので) */
+.streak-box .status.danger{color:var(--ink-sub);}
+.streak-box .status.danger .dot{background:var(--ink-sub);}
+/* サイドバーが開いている(本文が狭い)ときは、「継続中」と「次のボーナス N日」を2行に分ける。
+   折りたたみ時は幅に余裕があるので、1行(「継続中 ・ 次のボーナス N日」)のまま */
+.app[data-layout=sidebar] .streak-box .status .st-a,
+.app[data-layout=sidebar] .streak-box .status .st-b{display:block;}
+.app[data-layout=sidebar] .streak-box .status .st-sep{display:none;}
+.home-meters{padding:10px 16px; display:flex; flex-direction:column; justify-content:center; gap:9px;}
+
+.exam-card{padding:14px 16px; border-bottom:1px solid var(--line);}
+.exam-card .exam-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;}
+.exam-card .name{font-size:13px; font-weight:700;}
+.exam-card .date{font-size:11px; color:var(--ink-sub); margin-left:8px;}
+.exam-card .cd{font-size:13px; color:var(--stamp); font-weight:700;}
+.exam-card .empty-note{padding:2px 0;}
+/* ホームの達成表示は控えめに: 太枠やパルスは無し、薄い金の左線とバッジだけ */
+/* ホームの試験カードは、達成時も左のアクセント線は付けない(金の「★ 達成」バッジだけで示す) */
+.badge-done-quiet{background:var(--gold); color:var(--paper); font-size:10px; padding:2px 7px; margin-right:7px; font-weight:700;}
+.exam-sameday{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px;
+  padding-top:10px; border-top:1px dashed var(--line); font-size:11px; color:var(--ink-sub);}
+.exam-sameday-btn{border:none; background:none; color:var(--ink-sub); font-size:11px; cursor:pointer;
+  text-decoration:underline; text-underline-offset:2px; font-family:var(--font-sans); padding:0; white-space:nowrap;
+  transition:color .2s ease;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .exam-sameday-btn:hover{color:var(--ink);}}
+
+.chart-sec{padding:14px 16px; border-bottom:1px solid var(--line);}
+.chart-wrap{position:relative; height:96px;}
+.chart-wrap svg{width:100%; height:96px; display:block; overflow:visible;}
+.core, .halo{position:absolute; width:8px; height:8px; margin:-4px 0 0 -4px; border-radius:50%; pointer-events:none;}
+.core{background:var(--stamp);}
+.halo{border:2px solid var(--stamp); animation:ping 2.6s ease-out infinite;}
+@keyframes ping{0%{transform:scale(1); opacity:.65;} 100%{transform:scale(3.75); opacity:0;}}
+@media (prefers-reduced-motion:reduce){ .halo{display:none;} }
+.chart-days{display:flex; justify-content:space-between; font-size:10px; color:var(--ink-sub); margin-top:4px;}
+
+.log{border-bottom:1px solid var(--line);}
+.lg-head, .lg-row{display:grid; grid-template-columns:64px 1fr 64px 90px; align-items:center;}
+.lg-head{font-size:11px; color:var(--ink-sub); padding:8px 0 4px;}
+.lg-row{padding:5px 0; border-top:1px solid var(--line); font-size:12px;}
+.lg-row.today{background:var(--paper2);}
+.lg-row .d b{display:block; font-weight:500;} .lg-row .d span{font-size:10px; color:var(--ink-sub);}
+.bt{height:9px; background:var(--paper2);} .bf{height:100%; background:var(--ink); opacity:.82;}
+.lg-row.today .bf{background:var(--stamp); opacity:1; animation:bbreathe 2.6s ease-in-out infinite;}
+@keyframes bbreathe{0%,100%{opacity:1;} 50%{opacity:.55;}}
+@media (prefers-reduced-motion:reduce){ .lg-row.today .bf{animation:none;} }
+.lg-row .m{text-align:right; padding-right:8px;} .lg-row.today .m{font-weight:700;}
+.tg{display:flex; gap:4px; padding-left:10px;} .tg i{width:6px; height:6px; border-radius:50%; display:block;}
+
+.split{display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--line);}
+.split > div{padding:14px 16px;} .split > div:first-child{border-right:1px solid var(--line);}
+.tagbar{display:flex; height:14px; overflow:hidden;} .tagbar span{height:100%;}
+.legend{display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:8px; font-size:11px; color:var(--ink-sub);}
+.legend i{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px;}
+.hist{display:flex; flex-direction:column; gap:6px;} .hrow{display:flex; justify-content:space-between; font-size:12px;}
+.hrow .r{color:var(--ink-sub);} .hrow .d{color:var(--gold); font-weight:500;}
+.note{padding:14px 0 0; font-size:12px; color:var(--ink-sub);}
+
+/* ウィンドウ幅ではなく、サイドバー分を差し引いた「実際の中身の幅」で折り返す
+   (@media だとサイドバーの折りたたみ/展開で実際の幅が変わっても検知できないため、
+   .main を container-type:inline-size にした上で @container を使う) */
+/* ===== 設定 ===== */
+.theme-row, .radio-row{display:flex; gap:8px; padding:4px 0;}
+
+.set-row{display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--line); gap:14px;}
+.set-row:last-child{border-bottom:none;}
+.set-row .lbl{font-size:12px; color:var(--ink-sub);}
+.set-row .ctrl{display:flex; align-items:center; gap:8px;}
+.unit{font-size:11px; color:var(--ink-sub);}
+
+.goal-grid{display:grid; grid-template-columns:1fr; gap:4px 24px;}
+@container (min-width:460px){ .goal-grid{grid-template-columns:1fr 1fr;} }
+.goal-grid .set-row{border-bottom:none; padding:6px 0;}
+
+.formula-note{font-size:11px; color:var(--ink-sub); margin-top:10px; line-height:1.7;}
+.formula-note code{font-family:var(--font-mono); background:var(--paper2); padding:1px 5px; font-size:11px; color:var(--ink);}
+
+.guide-toggle{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--ink-sub);
+  cursor:pointer; margin-top:8px; user-select:none; transition:color .2s ease;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .guide-toggle:hover, :where(:root:not(.is-touch)) .adv-toggle:hover{color:var(--ink);}}
+.guide-toggle .arrow{display:inline-block; transition:transform .2s; font-family:var(--font-mono);}
+.guide-toggle.open .arrow{transform:rotate(90deg);}
+.guide-content{display:none; margin-top:10px; border:1px solid var(--line); padding:12px; background:var(--paper2);}
+.guide-content.open{display:block;}
+.guide-row{display:flex; gap:12px; padding:5px 0; font-size:11px; border-bottom:1px solid var(--line);}
+.guide-row:last-child{border-bottom:none;}
+.guide-row .k{font-family:var(--font-mono); color:var(--ink); width:66px; flex:none;}
+.guide-row .v{color:var(--ink-sub);}
+.guide-example{margin-top:8px; padding-top:8px; border-top:1px dashed var(--line);}
+.guide-example .ex-lbl{font-size:10px; color:var(--ink-sub); margin-bottom:5px;}
+.guide-example code{display:block; font-family:var(--font-mono); font-size:11px;
+  background:var(--paper); padding:5px 8px; margin-bottom:5px; cursor:pointer;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .guide-example code:hover{background:var(--line);}}
+
+.calc-preview{padding-top:12px;}
+.calc-preview .cp-lbl{font-size:11px; color:var(--ink-sub); margin-bottom:8px;}
+/* min-height … グラフはAPIの結果が届いてから描かれる。先に高さ(グラフ90px + 横軸の文字)を確保しておくと、
+   高度な設定を展開するアニメーションの最後で、高さが跳ばない */
+.calc-chart{min-height:108px;}
+.calc-chart svg{width:100%; height:90px; display:block; overflow:visible;}
+.chart-label{font-family:var(--font-mono); font-size:9px; fill:var(--gold);}
+.calc-hlabels{display:flex; justify-content:space-between; font-size:10px; color:var(--ink-sub); margin-top:4px;}
+.calc-try{display:flex; align-items:center; gap:10px; margin-top:12px; font-size:12px;}
+.calc-try .finput{width:90px; text-align:left;}
+.calc-try .arrow{color:var(--ink-sub);}
+.calc-result{font-size:14px; font-weight:700; color:var(--gold);}
+
+.tag-row{display:flex; justify-content:space-between; align-items:center; padding:5px 4px;}
+.tag-row + .tag-row{border-top:1px solid var(--line);}
+.tag-row .left{display:flex; align-items:center; gap:10px;}
+.tag-sw{width:12px; height:12px; border-radius:50%;}
+.tag-name{font-size:13px;}
+.tag-row .right{display:flex; align-items:center; gap:6px;}
+
+.swatch-grid{display:flex; gap:9px; flex-wrap:wrap;}
+.swatch{width:24px; height:24px; border-radius:50%; cursor:pointer; border:2px solid transparent;}
+.swatch.selected{border-color:var(--ink);}
+
+.data-actions{display:flex; flex-direction:column; gap:10px;}
+.data-actions .btn{width:100%;}
+.data-row{display:flex; gap:10px;}
+.data-row .btn{flex:1;}
+.data-path{font-size:11px; color:var(--ink-sub); margin-top:2px;}
+.data-path b{font-family:var(--font-mono); color:var(--ink); font-weight:400;}
+
+.adv-toggle{display:flex; align-items:center; gap:8px; padding:14px 4px; cursor:pointer;
+  font-size:12px; color:var(--ink-sub); border-top:1px solid var(--ink); border-bottom:1px solid var(--line); user-select:none;
+  transition:color .2s ease;}
+.adv-toggle .arrow{display:inline-block; transition:transform .2s; font-family:var(--font-mono);}
+.adv-toggle.open .arrow{transform:rotate(90deg);}
+.adv-content{display:none;}
+.adv-content.open{display:block;}
+
+.about{font-size:12px; color:var(--ink-sub); line-height:1.9;}
+.about b{color:var(--ink); font-family:var(--font-mono);}
+
+/* ===== 試験管理 ===== */
+.exam-actions{display:flex; align-items:center; gap:2px;}
+.exam-actions .cd{margin-right:6px;}
+
+.badge-tomorrow{background:var(--stamp); color:var(--paper); font-size:10px; padding:2px 7px; margin-right:7px; font-weight:700; letter-spacing:.02em;}
+.badge-done{background:var(--gold); color:var(--paper); font-size:10px; padding:2px 7px; margin-right:7px; font-weight:700; letter-spacing:.02em;}
+
+.exam-card.urgent{position:relative; border:2px solid var(--stamp); background:var(--paper2); padding:14px 14px; margin:6px 0;}
+.exam-card.urgent::after{content:''; position:absolute; inset:-3px; border:1px solid var(--stamp);
+  animation:ping-card 2.6s ease-out infinite; pointer-events:none;}
+@keyframes ping-card{0%{opacity:.6;} 100%{opacity:0; inset:-8px;}}
+
+.exam-card.done{position:relative; background:var(--paper2); padding:14px 14px; margin:6px 0;
+  border:1px solid var(--gold); box-shadow: inset 0 0 0 3px var(--paper2), inset 0 0 0 4px var(--gold);}
+.exam-card.done::after{content:''; position:absolute; inset:-3px; border:2px solid var(--gold);
+  animation:ping-goal 2.6s ease-out infinite; pointer-events:none;}
+@keyframes ping-goal{0%{opacity:.6;} 100%{opacity:0; inset:-8px;}}
+@media (prefers-reduced-motion:reduce){ .exam-card.urgent::after, .exam-card.done::after{animation:none; display:none;} }
+
+.meter-tick.lbl::after{content:'100%'; position:absolute; top:-12px; left:50%; transform:translateX(-50%);
+  font-size:8px; color:var(--ink-sub); font-family:var(--font-mono);}
+
+.past-exam{padding:10px 4px; border-bottom:1px solid var(--line);}
+.past-exam .pe-top{display:flex; justify-content:space-between; align-items:center;}
+.past-exam .name{font-size:13px; font-weight:700;}
+.past-exam .date{font-size:11px; color:var(--ink-sub); margin-left:8px;}
+.past-exam .result{font-size:12px; font-weight:700;}
+.past-exam .result.ok{color:var(--gold);}
+.past-exam .result.ng{color:var(--stamp);}
+.result-col{text-align:right;}
+.pe-hours{font-size:11px; color:var(--ink-sub); margin-top:2px; white-space:nowrap;}
+
+/* ===== 記録ログ ===== */
+.lock-note{font-size:11px; color:var(--ink-sub); padding:2px 0 10px;}
+.sortbar{display:flex; align-items:center; gap:7px; padding:10px 0; font-size:11px; color:var(--ink-sub);}
+
+/* 日と日のあいだの上マージン(16px)は、見出し(.day-head)ではなく、日のグループ自身に持たせる。
+   見出しにあると、マージンがグループの外へ突き抜けて(相殺されて)高さの計測に入らず、追加・削除のアニメーション中
+   (高さを測った値に固定して、はみ出しを隠す間)だけ内側に入って、最後に16pxずれていた。
+   グループ自身のマージンなら、growIn / shrinkOut が高さと一緒に0から広げるので、ずれない。
+   普段の間隔は、これまでと同じ(前の日・フィルタのチップのマージンと相殺して16px)。 */
+.day-group{margin-left:2px; margin-top:16px;}
+.day-head{display:flex; justify-content:space-between; align-items:baseline; padding:7px 10px;
+  background:var(--paper2); font-size:12px;}
+.day-head .d b{font-weight:700; color:var(--ink); font-size:13px;}
+.day-head .total{color:var(--ink-sub); font-weight:400;}
+
+.rec{padding:10px 4px 10px 14px; border-bottom:1px solid var(--line); border-left:2px solid var(--line); margin-left:6px;}
+.rec-top{display:flex; align-items:center; gap:10px;}
+.rec-src{font-size:12px; color:var(--ink-sub); width:16px;}
+.rec-dur{font-size:14px; font-weight:700; width:60px;}
+.rec-stars{font-size:11px; color:var(--gold); letter-spacing:1px; width:80px;}
+.rec-pts{margin-left:auto; font-size:13px; font-weight:700; color:var(--gold);}
+.rec-content{font-size:12px; color:var(--ink); margin:6px 0 6px 26px;}
+.rec-tags{display:flex; gap:10px; flex-wrap:wrap; margin-left:26px;}
+.rec-tagx{display:flex; align-items:center; gap:4px; font-size:10px; color:var(--ink-sub);}
+.rec-tagx .sw{width:6px; height:6px; border-radius:50%;}
+.rec-tagx.exam .ex-flag{font-size:9px; color:var(--stamp);}
+
+.edit-summary{font-size:12px; color:var(--ink-sub); padding:8px 10px; background:var(--paper2); margin-bottom:14px; line-height:1.6;}
+.lock-hint{font-size:11px; color:var(--ink-sub); margin:-4px 0 14px; padding-left:2px;}
+
+/* ===== ストップウォッチ ===== */
+.sw-time{font-size:56px; font-weight:700; text-align:center; letter-spacing:.02em; margin-bottom:6px;}
+.sw-status-row{display:flex; align-items:center; gap:7px; justify-content:center; margin-bottom:6px;}
+.sw-status-row .lbl3{font-size:12px; color:var(--stamp);}
+/* ボタン同士の間隔は gap ではなく margin-left で持つ(横に伸びて現れる/消えるボタンが、隙間だけ残さないように。revealX が margin も 0 から動かす) */
+.sw-btn-row{display:flex; justify-content:center; margin-top:16px;}
+.sw-btn-row > * + *{margin-left:8px;}
+/* 横に伸び縮みして現れる/消えるボタンの文字が、幅が狭くなる途中で折り返して縦に伸びないように(revealX) */
+.sw-btn-row > *{white-space:nowrap; flex:none;}
+.pomo-linked-note{font-size:11px; color:var(--ink-sub); align-self:center; white-space:nowrap;}
+
+.pomo-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:9px;}
+/* 2つのチェック(ストップウォッチ連動 / 休憩中は一時停止)は縦に並べて、近づける */
+.pomo-chks{display:flex; flex-direction:column; align-items:flex-start; gap:6px; margin-bottom:14px;}
+.pomo-head .t{font-size:13px; font-weight:700;}
+.pomo-chk-row{display:flex; align-items:center; gap:7px; font-size:11px; color:var(--ink-sub); cursor:pointer; user-select:none;
+  transition:color .2s ease, opacity .25s ease;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .pomo-chk-row:hover{color:var(--ink);}}
+.pomo-chk{width:14px; height:14px; border:1px solid var(--ink); display:flex; align-items:center; justify-content:center; font-size:10px;
+  transition:background-color .2s ease, color .2s ease;}
+.pomo-chk.on{background:var(--ink); color:var(--paper);}
+/* チェックのマークは常に置いておき、不透明度と大きさをフェードさせる */
+.pomo-chk-mark{opacity:0; transform:scale(.5); transition:opacity .18s ease, transform .22s var(--ease-out);}
+.pomo-chk.on .pomo-chk-mark{opacity:1; transform:none;}
+/* ポモドーロの設定欄は「4列×1行」か「2列×2行」の2通りだけ。切り替えは、中身(カード)の幅で行う(#content が container) */
+.pomo-cfg{display:grid; grid-template-columns:repeat(4, 1fr); gap:14px 18px; justify-items:center; margin-bottom:18px;
+  font-size:11px; color:var(--ink-sub);}
+@container (max-width:460px){ .pomo-cfg{grid-template-columns:repeat(2, 1fr);} }
+.pomo-cfg-cell{text-align:center;}
+.pomo-cfg-cell b{display:block; font-size:14px; color:var(--ink); margin-top:2px; font-weight:400;}
+.pomo-cfg input.finput.num{width:44px;}
+@media (prefers-reduced-motion:reduce){ .pomo-chk-row, .pomo-chk, .pomo-chk-mark{transition:none;} }
+
+.ring-area{display:flex; flex-direction:column; align-items:center; gap:10px;}
+.ring-phase{font-size:12px; color:var(--ink-sub);}
+.ring-wrap{position:relative; width:150px; height:150px;}
+.ring-time{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700;}
+.cycle-dots{display:flex; gap:6px; margin-top:2px;}
+.cyc-dot{width:7px; height:7px; border-radius:50%; border:1px solid var(--stamp);}
+.cyc-dot.done{background:var(--stamp);}
+.cyc-dot.cur{background:var(--gold); border-color:var(--gold);}
+
+@container (max-width:640px){
+  .grid-top{grid-template-columns:1fr;} .streak-box{border-right:none; border-bottom:1px solid var(--line);}
+  .lg-head, .lg-row{grid-template-columns:52px 1fr 54px 0;} .tg, .tg-head{display:none;}
+  .split{grid-template-columns:1fr;} .split > div:first-child{border-right:none; border-bottom:1px solid var(--line);}
+}
+
+/* ===== カレンダー ===== */
+/* クラス名はすべて cal- で始める。shell.css の .nav 系や、他タブの汎用名(.legend .rec など)と
+   衝突させないため(デザイン案の .nav / .legend / .stats / .month はそのままだとサイドバーや
+   ホームのスタイルとぶつかる)。日別ポップアップの記録行だけは記録ログと同じ .rec 系を再利用する。 */
+.cal-header{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px 16px; padding:16px 0 4px;}
+.cal-nav{display:flex; align-items:center; gap:12px;}
+.cal-navbtn{border:1px solid var(--line); background:none; color:var(--ink-sub); width:26px; height:26px;
+  cursor:pointer; font-size:13px; font-family:var(--font-sans);
+  transition:color .2s ease, border-color .2s ease, background-color .2s ease;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .cal-navbtn:hover{border-color:var(--ink); color:var(--ink); background-color:rgba(var(--ink-rgb),.05);}}
+.cal-month{font-size:14px; font-weight:700;}
+.cal-gotoday{border:1px solid var(--line); background:none; color:var(--ink-sub); font-size:11px;
+  padding:5px 10px; cursor:pointer; font-family:var(--font-sans);
+  transition:color .2s ease, border-color .2s ease, background-color .2s ease;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .cal-gotoday:hover{border-color:var(--ink); color:var(--ink); background-color:rgba(var(--ink-rgb),.05);}}
+.cal-stats{font-size:12px; color:var(--ink-sub);}
+
+.cal-streak{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--ink-sub); padding-top:10px; min-height:26px;}
+.cal-streak b{color:var(--ink); font-weight:700;}
+.cal-streak{flex-wrap:wrap;}
+.cal-streak-past{flex-basis:100%; font-size:11px; color:var(--ink-sub);}
+.cal-streak .dot.idle{background:var(--ink-sub);}
+
+.cal-legend{display:flex; align-items:center; gap:5px; font-size:10px; color:var(--ink-sub); padding:8px 0 14px;}
+.cal-lg{width:11px; height:11px; border:1px solid var(--line); display:inline-block;}
+
+/* 曜日行とグリッドは、列のずれを避けるため同じ gap にする */
+.cal-weekrow{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px;}
+.cal-weekday{text-align:center; font-size:11px; color:var(--ink-sub);}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
+
+.cal-cell{position:relative; aspect-ratio:1; min-width:0; border:1px solid var(--line); cursor:pointer; padding:4px;}
+.cal-cell:focus-visible{outline:1px solid var(--ink); outline-offset:1px;}
+.cal-dn{position:relative; font-size:11px; color:var(--ink-sub);}
+/* 日付セルのホバー: 薄い色づきがフェードで重なる(クリックできる面なので)。ヒートマップの濃い日は明るい色を重ねる。
+   ::before は文字や目印(位置指定あり)より先に描かれるので、それらの下に入る */
+.cal-cell::before{content:''; position:absolute; inset:0; background:rgba(var(--ink-rgb),.08); opacity:0;
+  transition:opacity .2s ease; pointer-events:none;}
+.cal-cell.cal-lv3::before, .cal-cell.cal-lv4::before{background:rgba(var(--paper-rgb),.16);}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .cal-cell:hover::before{opacity:1;}}
+
+/* ヒートマップの濃さ(0=記録なし 〜 4=3時間以上)。しきい値は cal.js の HEAT_STEPS */
+.cal-lv0{background:transparent;}
+.cal-lv1{background:rgba(var(--ink-rgb),0.14);}
+.cal-lv2{background:rgba(var(--ink-rgb),0.30);}
+.cal-lv3{background:rgba(var(--ink-rgb),0.50);}
+.cal-lv4{background:rgba(var(--ink-rgb),0.75);}
+.cal-lv3 .cal-dn, .cal-lv4 .cal-dn{color:var(--paper);}
+
+.cal-cell.outside{opacity:.28; pointer-events:none;}
+.cal-cell.today{border:2px solid var(--stamp);}
+.cal-cell.today::after{content:''; position:absolute; inset:-3px; border:1px solid var(--stamp);
+  animation:cal-ping 2.6s ease-out infinite; pointer-events:none;}
+@keyframes cal-ping{0%{opacity:.6; transform:scale(1);} 100%{opacity:0; transform:scale(1.18);}}
+@media (prefers-reduced-motion:reduce){ .cal-cell.today::after{animation:none; display:none;} }
+
+/* 目印: 試験日(右上)・連続ボーナス(右下)・さぼり券(左下)。
+   さぼり券はデザイン案では左上だったが、日付の数字と重なるため左下に置く */
+.cal-mk-exam{position:absolute; top:2px; right:3px; font-size:8px; color:var(--stamp);}
+.cal-mk-mile{position:absolute; bottom:3px; right:3px; width:5px; height:5px; border-radius:50%; background:var(--gold);}
+.cal-mk-sabori{position:absolute; bottom:2px; left:3px; font-size:8px; color:var(--ink-sub);}
+.cal-cell.streak{box-shadow:inset 0 -3px 0 var(--stamp);}
+/* 過去に続いていた連続記録は、いま進行中の朱色の下線とは別に、薄いインクの下線で示す */
+.cal-cell.streak-past{box-shadow:inset 0 -3px 0 rgba(var(--ink-rgb),.35);}
+
+/* 日別ポップアップ */
+.cal-pop{max-width:380px;}
+.cal-pop-title{font-size:14px; font-weight:700; margin-bottom:2px;}
+.cal-pop-total{font-size:11px; color:var(--ink-sub); margin-bottom:14px; min-height:14px;}
+.cal-info{font-size:12px; margin-bottom:8px; padding-bottom:8px; border-bottom:1px dashed var(--line);}
+.cal-info.exam{color:var(--stamp);}
+.cal-info.mile{color:var(--gold);}
+.cal-pop .rec{margin-left:0; padding:9px 0; border-left:0;}
+.cal-pop .rec:last-child{border-bottom:none;}
+
+/* 今月の目標 */
+.cal-goal{margin-top:22px; padding:16px 4px 0; border-top:1px solid var(--ink);}
+.cal-goal-badge{margin-left:8px; color:var(--gold); font-weight:700;}
+.cal-goal-edit{display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:14px; font-size:12px; color:var(--ink-sub);}
+.cal-goal-input{width:56px; text-align:center; font-family:var(--font-mono); font-size:13px; color:var(--ink);}
+.cal-goal-msg{font-size:11px; color:var(--stamp);}
+.cal-goal-msg.ok{color:var(--ink-sub);}
+.cal-goal-note{margin-top:10px; font-size:11px; color:var(--ink-sub);}
+
+/* 中身の幅が狭いとき(サイドバー展開+小さいウィンドウなど)は、セルの文字を少し小さくする */
+@container (max-width:520px){
+  .cal-cell{padding:3px;}
+  .cal-dn{font-size:10px;}
+  .cal-stats{width:100%;}
+}
+
+/* ===== 統計 ===== */
+/* クラス名はすべて st- で始める(他タブの汎用名と衝突させないため)。
+   .sect / .sect-lbl / .tbtn / .empty-note / .dot / .modal-* は共通クラスを再利用する。 */
+.st-period{display:flex; gap:8px; padding:14px 0;}
+
+.st-overview{display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--ink); border-bottom:1px solid var(--ink);}
+.st-ov-cell{padding:14px 8px; text-align:center; min-width:0;}
+.st-ov-cell + .st-ov-cell{border-left:1px solid var(--line);}
+.st-ov-val{font-size:20px; font-weight:700;}
+.st-ov-val.gold{color:var(--gold);}
+.st-ov-lbl{font-size:10px; color:var(--ink-sub); margin-top:5px;}
+.st-ov-cmp{font-size:10px; margin-top:4px; color:var(--ink-sub);}
+.st-ov-cmp.up{color:var(--gold);}
+.st-ov-cmp.down{color:var(--stamp);}
+
+.st-detail-row{text-align:right; padding-top:2px;}
+.st-detail-btn{background:none; border:none; color:var(--ink-sub); font-size:11px; cursor:pointer; padding:6px 0;
+  text-decoration:underline; text-underline-offset:3px; font-family:var(--font-sans); transition:color .2s ease;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .st-detail-btn:hover{color:var(--ink);}}
+.st-last{border-bottom:none;}
+
+.st-streak{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--ink-sub); margin-bottom:12px;}
+.st-streak b{color:var(--ink); font-weight:700;}
+.st-streak .dot.idle{background:var(--ink-sub);}
+
+/* 今週: 横棒の行 */
+.st-wk-row{display:grid; grid-template-columns:64px 1fr 64px; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--line);}
+.st-wk-d{font-size:12px; color:var(--ink-sub);}
+.st-wk-d b{display:block; color:var(--ink); font-weight:500;}
+.st-bar-track{height:8px; background:var(--paper2); position:relative;}
+.st-bar-fill{height:100%; background:var(--ink); opacity:.82;}
+.st-wk-row.today .st-bar-fill{background:var(--stamp); opacity:1; animation:st-breathe 2.6s ease-in-out infinite;}
+@keyframes st-breathe{0%,100%{opacity:1;} 50%{opacity:.55;}}
+.st-wk-tags{display:flex; gap:4px; margin-top:4px; min-height:6px;}
+.st-wk-tag{width:6px; height:6px; border-radius:50%;}
+.st-wk-m{font-size:13px; text-align:right; color:var(--ink-sub);}
+.st-wk-row.today .st-wk-m{color:var(--ink); font-weight:700;}
+.st-wk-m.sabori{font-size:11px;}
+
+/* 今月: 縦棒(日別)と、その下の連続記録バー */
+.st-daychart{display:flex; align-items:flex-end; gap:2px; height:90px;}
+.st-daybar{flex:1; min-width:0; background:var(--paper2); position:relative; height:100%;}
+.st-daybar-fill{position:absolute; bottom:0; left:0; width:100%; background:var(--ink); opacity:.8;}
+.st-daybar.today .st-daybar-fill{background:var(--stamp); opacity:1; animation:st-breathe 2.6s ease-in-out infinite;}
+.st-ticket{position:absolute; bottom:2px; left:50%; transform:translateX(-50%); font-size:8px;}
+.st-daylabels{position:relative; height:14px; margin-top:6px; font-size:10px; color:var(--ink-sub);}
+.st-daylabels span{position:absolute; transform:translateX(-50%);}
+.st-streak-track{position:relative; height:4px; background:var(--paper2); margin-top:6px;}
+.st-seg{position:absolute; top:0; height:100%; background:var(--stamp);}
+.st-seg.past{background:var(--ink-sub); opacity:.55;}
+.st-streak-past{font-size:11px; color:var(--ink-sub); margin:-4px 0 12px;}
+
+/* 全期間: 月別の縦棒と、最長連続記録 */
+.st-month-chart{display:flex; align-items:flex-end; gap:8px; height:100px;}
+.st-mbar{flex:1; min-width:0; background:var(--paper2); position:relative; height:100%;}
+.st-mbar-fill{position:absolute; bottom:0; left:0; width:100%; background:var(--ink); opacity:.82;}
+.st-mbar.cur .st-mbar-fill{background:var(--stamp); opacity:1;}
+.st-month-labels{display:flex; gap:8px; margin-top:6px; font-size:10px; color:var(--ink-sub);}
+.st-month-labels span{flex:1; min-width:0; text-align:center; white-space:nowrap; overflow:hidden;}
+.st-best{border:1px solid var(--gold); padding:12px 14px; margin-top:16px; display:flex; justify-content:space-between; align-items:center; gap:12px;}
+.st-best-t{font-size:12px; color:var(--ink-sub);}
+.st-best-v{font-size:15px; font-weight:700; color:var(--gold);}
+.st-best-v span{font-size:11px; color:var(--ink-sub); font-weight:400;}
+
+/* 曜日別 */
+.st-wd-row{display:grid; grid-template-columns:26px 1fr 58px; align-items:center; gap:10px; font-size:12px; margin-bottom:8px;}
+.st-wd-lbl{color:var(--ink-sub);}
+.st-wd-track{height:8px; background:var(--paper2); position:relative;}
+.st-wd-fill{height:100%; background:var(--ink);}
+.st-wd-val{text-align:right; color:var(--ink-sub);}
+
+/* タグ別 */
+.st-tagbar{display:flex; height:14px; width:100%; overflow:hidden;}
+.st-tagbar span{height:100%;}
+.st-tag-legend{display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:10px; font-size:11px;}
+.st-tag-item{display:flex; align-items:center; gap:5px; color:var(--ink-sub);}
+.st-tag-item b{color:var(--ink); font-weight:500;}
+.st-tag-sw{width:7px; height:7px; border-radius:50%; flex:none;}
+
+/* 充実度の分布 */
+.st-q-row{display:grid; grid-template-columns:34px 1fr 40px; align-items:center; gap:10px; font-size:12px; margin-bottom:7px;}
+.st-q-lbl{color:var(--gold); letter-spacing:1px;}
+.st-q-track{height:8px; background:var(--paper2);}
+.st-q-fill{height:100%; background:var(--gold);}
+.st-q-val{text-align:right; color:var(--ink-sub);}
+
+/* 詳細統計ポップアップ */
+.st-drow{display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid var(--line); font-size:12px;}
+.st-dlbl{color:var(--ink-sub);}
+.st-dval{font-weight:700;}
+.st-dsub{font-weight:400; color:var(--ink-sub);}
+.st-ratio{margin-top:18px;}
+.st-ratio-l{font-size:11px; color:var(--ink-sub); margin-bottom:6px;}
+.st-ratio-bar{display:flex; height:14px; overflow:hidden;}
+.st-ratio-bar span{height:100%;}
+.st-ratio-legend{display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:7px; font-size:11px; color:var(--ink-sub);}
+.st-sw{width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:4px;}
+.st-ratio-note{font-size:10px; color:var(--ink-sub); margin-top:6px;}
+
+@media (prefers-reduced-motion:reduce){
+  .st-wk-row.today .st-bar-fill, .st-daybar.today .st-daybar-fill{animation:none;}
+}
+/* 中身の幅が狭いときは、概要の数字を少し小さくする */
+@container (max-width:520px){
+  .st-ov-val{font-size:16px;}
+  .st-ov-cell{padding:12px 4px;}
+  .st-wk-row{grid-template-columns:54px 1fr 56px; gap:8px;}
+}
+
+/* ===== ショップ ===== */
+/* クラス名はすべて sh- で始める。.add-btn / .btn / .finput / .field / .flbl / .icon-btn / .modal-* / .modal-actions は共通クラスを再利用する。 */
+.sh-sabori{border:1px solid var(--ink); background:var(--paper2); padding:9px 12px; margin:14px 0 20px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;}
+.sh-sabori-main{min-width:0;}
+.sh-sabori-head{display:flex; align-items:baseline; gap:10px;}
+.sh-sabori-head .name{font-size:13px; font-weight:700;}
+.sh-sabori-head .owned{font-size:12px; color:var(--ink-sub);}
+.sh-sabori-note{font-size:10px; color:var(--ink-sub); margin-top:2px; line-height:1.5;}
+.sh-sabori-buy{display:flex; align-items:center; gap:10px; flex:none;}
+.sh-sabori-buy .unit{font-size:11px; color:var(--ink-sub);}
+
+.sh-sect-head{display:flex; justify-content:space-between; align-items:center; margin:20px 4px 10px;}
+.sh-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+@container (max-width:420px){ .sh-grid{grid-template-columns:1fr;} }
+
+.sh-card{border:1px solid var(--line); padding:14px; display:flex; flex-direction:column; gap:8px; min-width:0;}
+.sh-card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:6px;}
+.sh-card-name{font-size:13px; font-weight:500; min-width:0; overflow-wrap:anywhere;}
+.sh-marks{display:flex; gap:2px; margin:-4px -4px 0 0; flex:none;}
+.sh-mark{border:none; background:none; font-size:14px; color:var(--line); cursor:pointer; padding:2px 4px;
+  opacity:.8; transition:color .2s ease, opacity .2s ease;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .sh-mark:hover{opacity:1;}}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .sh-mark:not(.active):hover{color:var(--ink-sub);}}
+.sh-mark.active{opacity:1;}
+.sh-mark.active.fav{color:var(--gold);}
+.sh-mark.active.goal{color:var(--stamp);}
+.sh-cost{font-size:16px; font-weight:700; color:var(--gold);}
+.sh-cost.high{color:var(--ink-sub);}
+.sh-actions{display:flex; justify-content:space-between; align-items:center; margin-top:auto; gap:6px;}
+.sh-actions .btn{flex:1;}
+.sh-icons{display:flex; gap:2px;}
+
+/* 目標アイテム(金枠。購入できるようになったら金のリングが静かに広がる) */
+.sh-goal{position:relative; border:2px solid var(--gold); background:var(--paper2); padding:16px; margin-bottom:10px;}
+.sh-goal.ready::after{content:''; position:absolute; inset:-3px; border:2px solid var(--gold);
+  animation:sh-ping 2.6s ease-out infinite; pointer-events:none;}
+@keyframes sh-ping{0%{opacity:.6;} 100%{opacity:0; inset:-8px;}}
+@media (prefers-reduced-motion:reduce){ .sh-goal.ready::after{animation:none; display:none;} }
+.sh-goal-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;}
+.sh-goal-name{font-size:14px; font-weight:700; overflow-wrap:anywhere;}
+.sh-goal-cost{font-size:14px; font-weight:700; color:var(--gold); margin-top:2px;}
+.sh-goal-track{height:9px; background:var(--paper);}
+.sh-goal-fill{height:100%; background:var(--gold);}
+.sh-goal-label{font-size:12px; color:var(--ink-sub); margin-top:7px;}
+.sh-goal .sh-actions{margin-top:14px; gap:8px;}
+
+.sh-hist-row{display:flex; justify-content:space-between; gap:12px; font-size:12px; padding:7px 4px; border-bottom:1px solid var(--line);}
+.sh-hist-row .l{color:var(--ink-sub); min-width:0; overflow-wrap:anywhere;}
+.sh-hist-row .d{color:var(--gold); font-weight:500; flex:none;}
+
+/* 購入ポップアップ */
+.sh-qty-control{display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:16px;}
+.sh-qty-btn{width:30px; height:30px; border:1px solid var(--ink); background:none; color:var(--ink); cursor:pointer; font-size:15px; font-family:var(--font-sans);
+  transition:background-color .2s ease, color .2s ease, border-color .2s ease;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .sh-qty-btn:hover{background:var(--ink); color:var(--paper);}}
+.sh-qty{min-width:24px; text-align:center; font-size:15px; font-weight:700;}
+.sh-buy-total{text-align:center; font-size:13px; color:var(--ink-sub); margin-bottom:16px;}
+.sh-buy-total b{color:var(--gold);}
+
+/* 並び替えポップアップ */
+.sh-ro-note{font-size:11px; color:var(--ink-sub); margin-bottom:12px; line-height:1.6;}
+.sh-ro-row{display:flex; align-items:center; gap:8px; padding:7px 2px; font-size:13px;}
+.sh-ro-row + .sh-ro-row{border-top:1px solid var(--line);}
+.sh-ro-row .nm{display:flex; align-items:center; gap:8px; min-width:0;}
+.sh-ro-row .fav{color:var(--gold); font-size:12px;}
+
+/* 追加・編集フォームの「参考: ポイント換算グラフ」 */
+.sh-cost-row{display:flex; align-items:baseline; gap:8px;}
+.sh-cost-row .finput{width:80px; font-family:var(--font-mono);}
+.sh-unit{font-size:11px; color:var(--ink-sub);}
+.sh-cc-wrap{margin-top:4px; margin-bottom:14px;}
+.sh-cc-lbl{font-size:11px; color:var(--ink-sub); margin-bottom:8px;}
+.sh-cc-chart svg{width:100%; height:84px; display:block; overflow:visible;}
+.sh-cc-chart{min-height:84px;}
+.sh-cc-label{font-family:var(--font-mono); font-size:10px; fill:var(--ink-sub);}
+.sh-cc-hlabels{display:flex; justify-content:space-between; font-size:11px; color:var(--ink-sub); margin-top:6px;}
+.sh-cc-hint{font-size:12px; color:var(--gold); margin-top:8px; text-align:center; min-height:16px;}
+.sh-cc-runs{display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; font-size:12px; color:var(--ink-sub); flex-wrap:wrap;}
+.sh-cc-stepper{display:flex; align-items:center; gap:6px;}
+.sh-cc-step{width:24px; height:24px; border:1px solid var(--ink); background:none; color:var(--ink); cursor:pointer; font-size:13px; font-family:var(--font-sans);
+  transition:background-color .2s ease, color .2s ease, border-color .2s ease;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .sh-cc-step:hover{background:var(--ink); color:var(--paper);}}
+.sh-cc-rh{font-size:14px; font-weight:700; color:var(--ink); min-width:18px; text-align:center;}
+.sh-cc-rc{font-size:14px; font-weight:700; color:var(--gold);}
+
+@container (max-width:520px){
+  .sh-sabori{flex-wrap:wrap;}
+}
+
+/* ===== カレンダー: ホバーの概要(cal.js の tip) =====
+   勉強した日・試験日のセルにカーソルを置くと、概要がセルの近くに、拡大+フェードで現れる(動きは JS の Web Animations)。
+   body 直下に置く(#content の container-type の影響を避けるため。日別ポップアップと同じ理由)。 */
+.cal-tip{position:fixed; left:0; top:0; z-index:60; width:0; height:0; overflow:hidden;
+  background:var(--paper); border:1px solid var(--ink); box-shadow:0 6px 18px rgba(0,0,0,.18);
+  font-size:11px; line-height:1.45; pointer-events:none; visibility:hidden; opacity:0;}
+/* 中身(.cal-tip-layer)はカードの下端に揃える。カードの高さが変わると、上側だけが伸び縮みする。
+   幅は JS が測った値に固定する(カードの幅が動いている途中で、文が折り返し直さないように)。 */
+.cal-tip-layer{position:absolute; left:0; bottom:0; padding:7px 9px; box-sizing:border-box; min-width:120px; max-width:210px;}
+.cal-tip-foot{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:0 8px; margin-top:3px;}
+.cal-tip-foot .d{font-weight:700;}
+.cal-tip-foot .s{color:var(--ink-sub); font-size:10px;}
+.cal-tip-exam{color:var(--stamp); overflow-wrap:anywhere;}
+.cal-tip-sum{color:var(--ink-sub); margin-top:2px;}
+.cal-tip-recs{padding-bottom:3px; border-bottom:1px dashed var(--line);}
+.cal-tip-rec{display:flex; gap:6px; align-items:baseline; font-size:10px; color:var(--ink);}
+.cal-tip-rec .t{flex:none; font-weight:700;}
+.cal-tip-rec .n{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.cal-tip-rec .n.dim{color:var(--ink-sub);}
+.cal-tip-more{font-size:10px; color:var(--ink-sub);}
+.cal-tip-mile{color:var(--gold); font-size:10px; margin-top:2px;}
+.cal-tip-exam{margin-bottom:1px;}
+
+/* 「動きを減らす」設定のときは、この版で足したホバー・フェードの transition も省いて、即座に切り替える */
+@media (prefers-reduced-motion:reduce){
+  .cal-cell::before, .cal-navbtn, .cal-gotoday, .sh-mark, .sh-qty-btn, .sh-cc-step,
+  .exam-sameday-btn, .st-detail-btn, .guide-toggle, .adv-toggle, .timer, .timer .dot, .timer .tt{transition:none;}
+}
+
+/* ===== ポモドーロの設定(折りたたみ。いちばん下) ===== */
+/* 連動の切り替えだけは、見出し(ポモドーロタイマー)の右端 = 見出しの文字と左右対称の位置に置く(.pomo-head は左右に振り分け) */
+.pomo-adv-toggle{margin-top:14px; padding:10px 4px; border-top:1px solid var(--line); border-bottom:none; font-size:11px;}
+.pomo-opts{display:flex; flex-direction:column; gap:10px; margin-top:4px;}
+.pomo-opts .pomo-chk-row{font-size:12px;}
+.pomo-opt-note{font-size:10px; color:var(--ink-sub); margin:-6px 0 0 21px;}
+.pomo-vol, .pomo-preview{display:flex; align-items:center; gap:10px; margin-left:21px; transition:opacity .25s ease;}
+.pomo-vol-lbl{font-size:11px; color:var(--ink-sub); width:28px; flex:none;}
+.pomo-vol input[type=range]{flex:1; max-width:200px; accent-color:var(--ink); cursor:pointer;}
+.pomo-vol-val{font-size:11px; width:26px; text-align:right; color:var(--ink);}
+.pomo-preview .btn{padding:4px 10px; font-size:11px;}
+@media (prefers-reduced-motion:reduce){ .pomo-vol, .pomo-preview{transition:none;} }
+.data-actions .btn.small{width:auto;}

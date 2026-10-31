@@ -1,0 +1,257 @@
+/* Study Tracker v3 - 共通部品(全タブ共通) */
+
+.sect{padding:18px 4px; border-bottom:1px solid var(--line);}
+.sect-lbl{font-size:11px; color:var(--ink-sub); margin-bottom:10px;}
+
+/* 小さい切替ボタン(並び替え・期間・テーマなどのトグルで使う) */
+.tbtn{border:1px solid var(--line); background:transparent; color:var(--ink-sub); font-size:12px;
+  padding:6px 14px; cursor:pointer; font-family:var(--font-sans);
+  transition:color .2s ease, border-color .2s ease, background-color .2s ease;}
+.tbtn.active{border-color:var(--ink); color:var(--ink); font-weight:700;}
+/* 選択中は太字のまま。ただし太字にすると幅が変わって隣がずれるので、太字ぶんの幅を最初から確保しておく
+   (data-text に同じ文字を入れ、太字・高さ0・不可視で下に置く)。太さだけは一瞬で切り替わる(太さは滑らかに変えられないため)。 */
+.tbtn::after{content:attr(data-text); display:block; height:0; overflow:hidden; visibility:hidden;
+  font-weight:700; pointer-events:none; user-select:none;}
+
+/* ボタン */
+.btn{border:1px solid var(--ink); background:transparent; color:var(--ink); padding:9px 20px;
+  font-family:var(--font-sans); font-size:13px; font-weight:500; cursor:pointer; position:relative;
+  transition:background-color .2s ease, border-color .2s ease, color .2s ease, filter .2s ease;}
+.btn.small{padding:6px 14px; font-size:11px;}
+.btn.muted{border-color:var(--line); color:var(--ink-sub);}
+.btn.primary{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+.btn.danger{background:var(--stamp); color:var(--paper); border-color:var(--stamp);}
+.btn.disabled{border-color:var(--line); color:var(--line); cursor:not-allowed; background:none;}
+.btn:disabled{border-color:var(--line); color:var(--line); cursor:not-allowed; background:none;}
+
+.add-btn{width:100%; margin-top:14px; border:1px dashed var(--line); background:none; color:var(--ink-sub);
+  padding:10px; font-size:13px; cursor:pointer; font-family:var(--font-sans);
+  transition:color .2s ease, border-color .2s ease, background-color .2s ease;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .add-btn:hover{border-color:var(--ink); color:var(--ink); background-color:rgba(var(--ink-rgb),.05);}}
+
+/* 枠のないボタン(アイコン・✕・★🎯・リンク風・展開トグル・チェック行)は、背景も押したときの反応も付けない。
+   ホバーしたときに、文字色が滑らかに濃くなる(フェードする)だけ。 */
+.icon-btn{border:none; background:none; color:var(--ink-sub); cursor:pointer; font-size:13px; padding:2px 6px;
+  transition:color .2s ease;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .icon-btn:hover{color:var(--ink);}}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .icon-btn.del:hover{color:var(--stamp);}}
+.modal-close{transition:color .2s ease;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .modal-close:hover{color:var(--ink);}}
+
+/* 入力欄 */
+.field{margin-bottom:14px;}
+.flbl{font-size:11px; color:var(--ink-sub); margin-bottom:6px;}
+/* 入力欄は2種類。
+   線型(通常・日付・幅広): 下線だけ。フォーカスすると、中心から左右へ下線(--fi-focus)が広がる。
+   ボックス型(.finput.num = 設定の数値入力): 枠。フォーカスすると、枠の色がフェードする。
+   どちらも、フォーカスの色は文字色(--ink)。エラーのとき(.err。formError.js が付ける)だけ朱色になる。
+   下線は border の位置に重ねて描くので、見た目の高さは以前と同じ(border は透明にして、背景を透かす)。 */
+.finput{--fi-line:var(--line); --fi-focus:var(--ink);
+  border:none; border-bottom:1px solid transparent; background-color:transparent;
+  background-image:linear-gradient(var(--fi-focus), var(--fi-focus)), linear-gradient(var(--fi-line), var(--fi-line));
+  background-repeat:no-repeat; background-position:center bottom, center bottom; background-size:0 1px, 100% 1px;
+  background-origin:border-box; background-clip:border-box;
+  font-family:var(--font-sans); font-size:13px; color:var(--ink); padding:6px 2px;
+  transition:background-size .28s var(--ease-out), --fi-line .2s ease, --fi-focus .2s ease;}
+.finput:focus{outline:none; background-size:100% 1px, 100% 1px;}
+.finput.err{--fi-line:var(--stamp); --fi-focus:var(--stamp);}
+.finput.wide{width:100%;}
+.finput.num{width:60px; font-family:var(--font-mono); text-align:right;
+  border:1px solid var(--line); background-color:var(--paper2); background-image:none; padding:6px 8px;
+  transition:border-color .2s ease;}
+.finput.num:focus{outline:none; border-color:var(--ink);}
+.finput.num.err, .finput.num.err:focus{border-color:var(--stamp);}
+@media (prefers-reduced-motion:reduce){ .finput, .finput.num{transition:none;} }
+
+.date-row{display:flex; align-items:baseline; gap:6px;}
+.date-row .finput{width:52px; text-align:center; font-family:var(--font-mono);}
+.date-row .finput.y{width:64px;}
+.date-row span{font-size:11px; color:var(--ink-sub);}
+
+.stars{font-size:18px; letter-spacing:3px; color:var(--gold); cursor:pointer;}
+.stars .off{color:var(--line);}
+/* 充実度の★(components/stars.js)。☆の上に★を重ね、★の不透明度をフェードさせて点灯/消灯を見せる。
+   .on = 選んだ値までの点灯 / .pv = ホバーのプレビュー(まだ選んでいない星は薄く点く) */
+.star{position:relative; display:inline-block;}
+.star-f{position:absolute; left:0; top:0; opacity:0; transition:opacity .2s ease; pointer-events:none;}
+.star.on .star-f{opacity:1;}
+.star.pv .star-f{opacity:.45;}
+@media (prefers-reduced-motion:reduce){ .star-f{transition:none;} }
+
+/* タグ/試験チップ */
+.chips{display:flex; flex-wrap:wrap; gap:8px;}
+.chip{display:flex; align-items:center; gap:6px; border:1px solid var(--line); padding:5px 12px;
+  font-size:12px; color:var(--ink-sub); cursor:pointer; user-select:none;
+  transition:color .2s ease, border-color .2s ease, background-color .2s ease;}
+.chip .sw{width:7px; height:7px; border-radius:50%;}
+.chip.active{border-color:var(--ink); color:var(--ink); font-weight:500;}
+/* 選択中の太字ぶんの幅を確保(.tbtn と同じ考え方。名前の部分 .chip-t に data-text を付ける) */
+.chip-t{display:inline-block;}
+.chip-t::after{content:attr(data-text); display:block; height:0; overflow:hidden; visibility:hidden;
+  font-weight:500; pointer-events:none; user-select:none;}
+.chip.exam .ex-flag{font-size:9px; color:var(--stamp);}
+.chip.exam .ex-date{font-size:10px; color:var(--ink-sub);}
+.chip.locked{opacity:.4; cursor:not-allowed;}
+
+/* ポップアップ: 背景はフェードイン/アウト、本体は拡大/縮小しながらフェードする。
+   .open の付け外しだけで、開くときも閉じるときも動く(display は切り替えず、visibility と opacity/transform を遷移させる)。
+   動きには緩急をつける: 開くときは勢いよく出てゆっくり止まる(ease-out)、閉じるときは短くゆっくり始まって加速する(ease-in)。
+   閉じている間は visibility:hidden なので、クリックもキー操作(フォーカス)も受けない。 */
+.modal-overlay{display:flex; position:fixed; inset:0; background:rgba(0,0,0,0);
+  align-items:flex-start; justify-content:center; padding:8vh 20px; z-index:50; overflow-y:auto;
+  visibility:hidden; pointer-events:none;
+  transition:background-color .2s cubic-bezier(.4,0,1,1), visibility 0s linear .2s;}
+.modal-overlay.open{background:rgba(0,0,0,.5); visibility:visible; pointer-events:auto;
+  transition:background-color .24s cubic-bezier(.22,1,.36,1), visibility 0s;}
+.modal-box{background:var(--paper); border:1px solid var(--ink); max-width:400px; width:100%;
+  padding:22px; position:relative; max-height:calc(100vh - 12vh); overflow-y:auto;
+  opacity:0; transform:translateY(10px) scale(.94);
+  transition:transform .18s cubic-bezier(.4,0,1,1), opacity .16s cubic-bezier(.4,0,1,1);}
+.modal-overlay.open .modal-box{opacity:1; transform:none;
+  transition:transform .32s cubic-bezier(.22,1,.36,1), opacity .22s cubic-bezier(.22,1,.36,1);}
+@media (prefers-reduced-motion:reduce){
+  .modal-overlay, .modal-overlay.open, .modal-box, .modal-overlay.open .modal-box{transition:none;}
+}
+.modal-box.danger{border-color:var(--stamp);}
+.modal-close{position:absolute; top:10px; right:12px; background:none; border:none; font-size:15px;
+  color:var(--ink-sub); cursor:pointer; font-family:var(--font-mono);}
+.modal-title{font-size:14px; font-weight:700; margin-bottom:16px;}
+.modal-box.danger .modal-title{color:var(--stamp);}
+.modal-box p{font-size:13px; line-height:1.7; margin:0 0 16px; color:var(--ink-sub);}
+.modal-actions{display:flex; gap:8px; margin-top:6px;}
+.modal-actions .btn{flex:1;}
+
+/* メーター(ゲージ) */
+.meter-row{display:grid; grid-template-columns:76px 1fr 108px; align-items:center; gap:10px; font-size:12px; margin-bottom:7px;}
+.meter-row .lbl{color:var(--ink-sub);}
+.meter-track{height:6px; background:var(--paper2); position:relative;}
+.meter-fill{height:100%; background:var(--ink);}
+.meter-row .val{text-align:right; color:var(--ink-sub);}
+.meter-row .val b{color:var(--ink);}
+.meter-row .val b.over{color:var(--gold);}
+
+/* 目標時間オーバー時の表示(試験の達成カードと同じ考え方: 100%の位置に目盛り、超過分は金色) */
+.meter-track.overshoot{display:flex; overflow:visible;}
+.meter-track.overshoot .meter-fill{flex:none;}
+.meter-over{height:100%; background:var(--gold); flex:none;}
+.meter-tick{position:absolute; top:-3px; bottom:-3px; width:1px; background:var(--ink-sub);}
+.exam-foot{display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-top:4px; font-size:11px; color:var(--ink-sub);}
+.exam-foot b{color:var(--ink);}
+.exam-foot.warn{color:var(--stamp);}
+.exam-foot.warn b{color:var(--stamp);}
+
+/* 呼吸ドット/パルス(「今動いている」を示す共通言語) */
+/* flex:none … 文が折り返す幅(サイドバーが開いていて本文が狭いとき)でも、ドットが縮んで楕円にならないようにする */
+.dot{width:6px; height:6px; border-radius:50%; background:var(--stamp); display:inline-block; flex:none;}
+.dot.live{animation:breathe 2.6s ease-in-out infinite;}
+@keyframes breathe{0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(178,58,46,.35);} 50%{opacity:.55; box-shadow:0 0 0 4px rgba(178,58,46,0);}}
+@media (prefers-reduced-motion:reduce){ .dot.live{animation:none;} }
+
+.pulse-ring{position:relative;}
+.pulse-ring::after{content:''; position:absolute; inset:-3px; border:2px solid var(--gold);
+  animation:ping-ring 2.6s ease-out infinite; pointer-events:none;}
+@keyframes ping-ring{0%{opacity:.6;} 100%{opacity:0; inset:-8px;}}
+@media (prefers-reduced-motion:reduce){ .pulse-ring::after{animation:none; display:none;} }
+
+/* 記録の保存ポップアップ(共通) */
+.sf-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px; gap:10px;}
+.sf-title{font-size:13px; font-weight:700;}
+.sf-est{font-size:13px; color:var(--gold); font-weight:700; white-space:nowrap;}
+.sf-note{font-size:11px; color:var(--ink-sub); margin:-6px 0 14px;}
+.sf-base{font-size:10px; color:var(--ink-sub); text-decoration:line-through; text-decoration-color:var(--line); margin:-10px 0 14px;}
+
+/* 空状態 */
+.empty-note{font-size:12px; color:var(--ink-sub); padding:6px 0 2px;}
+
+/* ダイアログ(components/dialog.js)のメッセージ: 改行を保ち、長い文字列(パスなど)も折り返す */
+.modal-box p.dlg-message{white-space:pre-wrap; overflow-wrap:anywhere;}
+
+/* 日付欄の「＋/−」ボタン(components/dateStepper.js): 入力欄の右に、小さな2つを縦に並べる */
+.ds{display:inline-flex; align-items:stretch; gap:3px;}
+.ds-btns{display:flex; flex-direction:column; gap:2px; justify-content:center;}
+.date-row .ds-btn, .ds-btn{width:17px; height:13px; padding:0; border:1px solid var(--line); background:none; color:var(--ink-sub);
+  font-family:var(--font-mono); font-size:11px; line-height:11px; cursor:pointer; text-align:center;
+  transition:background-color .15s ease, color .15s ease, border-color .15s ease;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .ds-btn:hover{background:var(--ink); border-color:var(--ink); color:var(--paper);}}
+
+/* ドラッグ&ドロップの並び替え(components/sortable.js)
+   .sort-handle … 行の先頭の「=」(掴む場所)
+   .sort-dragging … 掴んでいる行(カーソルについて動く。浮いて見えるように影をつける)
+   .sort-indicator … 「ここに入る」という場所を示す線(カーソルの位置に基づいて動く) */
+.sort-list{position:relative;}
+.sort-handle{display:inline-flex; align-items:center; justify-content:center; width:22px; height:24px; flex:none;
+  cursor:grab; touch-action:none; user-select:none; color:var(--ink-sub); border-radius:2px;
+  transition:color .15s ease, background-color .15s ease;}
+.sort-handle::before{content:""; display:block; width:12px; height:6px; border-top:2px solid currentColor; border-bottom:2px solid currentColor;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .sort-handle:hover{color:var(--ink); background:rgba(var(--ink-rgb),.07);}}
+.sort-handle:focus-visible{outline:1px solid var(--ink); outline-offset:1px; color:var(--ink);}
+.sort-active, .sort-active *{user-select:none; cursor:grabbing !important;}
+.sort-dragging{position:relative; z-index:5; background:var(--paper); box-shadow:0 8px 22px rgba(0,0,0,.2); opacity:.97;
+  transition:none !important; will-change:transform;}
+.sort-indicator{position:absolute; left:0; right:0; height:2px; background:var(--stamp); border-radius:1px;
+  pointer-events:none; display:none; z-index:6; transition:top .12s cubic-bezier(.22, 1, .36, 1);}
+.sort-indicator::before{content:""; position:absolute; left:-3px; top:-2px; width:6px; height:6px; border-radius:50%; background:var(--stamp);}
+@media (prefers-reduced-motion:reduce){ .sort-indicator{transition:none;} }
+
+/* ===== ボタンのホバー・押したときの反応 =====
+   枠のあるボタン(.btn .tbtn .chip .add-btn と、日付・数量の＋/−、カレンダーの月送り)だけが、
+   ホバーで背景・枠が変わり、押している間だけ「フラッシュ」する(縮みはしない)。
+   フラッシュは、押した瞬間に色が変わり(transition-duration:0s)、離すと元の transition で戻る。
+   枠のないボタン(.icon-btn など)は、各部品の側で「ホバーの文字色のフェード」だけにしてある。 */
+@media (any-hover:hover){:where(:root:not(.is-touch)) .btn:not(:disabled):not(.disabled):not(.primary):not(.danger):hover{border-color:var(--ink); background-color:rgba(var(--ink-rgb),.05);}}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .btn.primary:not(:disabled):hover{background-color:var(--ink-hover); border-color:var(--ink-hover);}}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .btn.danger:not(:disabled):hover{background-color:var(--stamp-hover); border-color:var(--stamp-hover);}}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .tbtn:not(.active):hover, :where(:root:not(.is-touch)) .chip:not(.active):not(.locked):hover{border-color:var(--ink); color:var(--ink); background-color:rgba(var(--ink-rgb),.05);}}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .tbtn.active:hover, :where(:root:not(.is-touch)) .chip.active:not(.locked):hover{background-color:rgba(var(--ink-rgb),.05);}}
+
+/* ホバーの見た目は、必ず次の形で書く(tests/css.touch.test.js が確認する):
+     @media (any-hover:hover){ :where(:root:not(.is-touch)) セレクタ:hover{ ... } }
+   ・タッチ操作では、指を離したあとも :hover が残り続けて、ハイライトが消えない。そこで、
+     ① ホバーできる入力が1つも無い端末(スマホ・タブレット)では、@media でホバーの見た目そのものを無効にし、
+     ② タッチ画面つきのパソコン・Chromebook のように、マウスもある端末では、触ったあとの間だけ <html> に is-touch が付く
+        (js/components/inputMode.js。マウスを動かすと外れる)ので、そのあいだはホバーの見た目を出さない。
+   :where() は詳しさ(優先度)を足さないので、:active の「同じ以上の強さ」の書き方に影響しない。 */
+/* :active は :hover より後ろ・同じ以上の強さで書く(同時に当たったとき、押したときの色が勝つように) */
+.btn:not(:disabled):not(.disabled):not(.primary):not(.danger):active,
+.tbtn.tbtn:active, .chip.chip:not(.locked):active, .add-btn.add-btn:active{background-color:rgba(var(--ink-rgb),.16); transition-duration:0s;}
+.btn.primary:not(:disabled):active{background-color:var(--ink-sub); border-color:var(--ink-sub); transition-duration:0s;}
+.btn.danger:not(:disabled):active{filter:brightness(1.2); transition-duration:0s;}
+.ds-btn.ds-btn:active, .sh-qty-btn.sh-qty-btn:active, .sh-cc-step.sh-cc-step:active,
+.cal-navbtn.cal-navbtn:active, .cal-gotoday.cal-gotoday:active{
+  background:var(--ink-sub); border-color:var(--ink-sub); color:var(--paper); transition-duration:0s;}
+
+@media (prefers-reduced-motion:reduce){
+  .btn, .tbtn, .chip, .add-btn, .icon-btn, .modal-close{transition:none;}
+}
+
+/* ===== フォームのエラー表示(components/formError.js) =====
+   保存ボタンの上に出す朱色の文。出る/消えるときは、高さが滑らかに広がる/縮む(ポップアップの高さもそれに合わせて動く)。
+   余白は文の下の padding にしてあるので、高さの動きに含まれる。 */
+.form-err{overflow:hidden;}
+.form-err-text{font-size:11px; line-height:1.6; color:var(--stamp); padding-bottom:8px;}
+
+/* ===== ダイアログ(components/dialog.js)のキーボード操作 =====
+   フォーカス枠は出さない。Tab で移動したとき(オーバーレイに .kbd が付く)だけ、枠ではなく薄い背景色で現在位置を示す。 */
+.modal-overlay.dlg .btn:focus{outline:none;}
+.modal-overlay.dlg.kbd .btn.muted:focus{background-color:rgba(var(--ink-rgb),.12); border-color:var(--ink);}
+.modal-overlay.dlg.kbd .btn.primary:focus{background-color:var(--ink-sub); border-color:var(--ink-sub);}
+.modal-overlay.dlg.kbd .btn.danger:focus{filter:brightness(1.2);}
+
+/* ===== ラベルのクロスフェード(components/morph.js) =====
+   .xf-host の中に .xf(いまの文字)が1つある。変わるときは、古い方が .xf-out になって(重ねて)フェードアウトし、
+   新しい方がフェードインする。ボタンの幅は JS が伸縮させる。 */
+.xf-host{position:relative;}
+.xf-host.xf-inline{display:inline-block; text-align:center;}
+.xf{display:inline-block; white-space:nowrap;}
+.xf-out{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;}
+.xf-host.xf-start .xf-out{justify-content:flex-start;}
+
+/* ── 右下の小さなお知らせ(バックアップのリマインダー・更新のお知らせ)と、データ管理の補足文 ── */
+.notice-host{position:fixed; right:20px; bottom:20px; z-index:900; display:flex; flex-direction:column; gap:10px; align-items:flex-end; pointer-events:none;}
+.notice-host > *{pointer-events:auto;}
+.notice-card{width:300px; max-width:calc(100vw - 40px); background:var(--paper); border:1px solid var(--ink); padding:14px 16px; box-shadow:0 6px 24px rgba(var(--ink-rgb),.15);}
+.notice-card .nt-text{font-size:13px; font-weight:700; margin-bottom:4px; color:var(--ink);}
+.notice-card .nt-sub{font-size:11px; color:var(--ink-sub); line-height:1.6; margin-bottom:10px; overflow-wrap:anywhere;}
+.notice-card .nt-actions{display:flex; gap:8px;}
+.data-note{font-size:11px; color:var(--ink-sub); margin:12px 0 6px;}
+.data-note:first-child{margin-top:0;}

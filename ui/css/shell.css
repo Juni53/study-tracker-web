@@ -1,0 +1,138 @@
+/* Study Tracker v3 - 外枠(左サイドバー・現行スタイルで確定) */
+
+/* サイドバーの開閉は、幅・余白・文字の出入りを transition で伸縮させる(幅は grid ではなく flex で持つ:
+   grid-template-columns の transition は古い WebView では動かないため) */
+:root{--nav-ease:cubic-bezier(.4, 0, .2, 1);}
+.app{display:flex; min-height:100vh;}
+.nav{background:var(--paper2); display:flex; flex-direction:column; position:sticky; top:0; align-self:flex-start;
+  height:100vh; width:183px; flex:none; overflow:hidden; padding:16px 0 12px; z-index:10;
+  transition:width .3s var(--nav-ease), padding .3s var(--nav-ease);}
+.brand{display:flex; align-items:center; gap:10px; padding:0 16px 16px;
+  transition:padding .3s var(--nav-ease), gap .3s var(--nav-ease);}
+.mark{width:28px; height:28px; border:1.5px solid var(--stamp); color:var(--stamp); display:flex; align-items:center;
+  justify-content:center; font-weight:700; font-size:14px; transform:rotate(-6deg); flex:none; font-family:var(--font-mono);}
+.binfo{min-width:0; max-width:140px; overflow:hidden; opacity:1;
+  transition:max-width .3s var(--nav-ease), opacity .2s ease .1s;}
+.bname{font-size:13px; font-weight:700; letter-spacing:.02em; line-height:1.2; white-space:nowrap;}
+.bver{font-size:10px; color:var(--ink-sub);}
+
+.items{display:flex; flex-direction:column; flex:1;}
+.nav .spacer{flex:1;}
+.item{display:flex; align-items:center; gap:12px; padding:10px 16px; font-size:13px; color:var(--ink-sub);
+  border-left:3px solid transparent; cursor:pointer; position:relative; user-select:none; white-space:nowrap;}
+.item svg{width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .item:hover{color:var(--ink); background:rgba(var(--ink-rgb),.05);}}
+.item.active{color:var(--ink); font-weight:700; border-left-color:var(--stamp); background:var(--paper);}
+/* ナビの項目(上の .item は、ナビ以外のポモドーロ設定欄でも使われているので、ナビ用の変更はここに分ける)。
+   アクセントは border ではなく専用の .accent 要素で、項目を切り替えると上下にスライドする(app.js の setActiveNav)。
+   項目は overflow:hidden なので、アクセントは自分の項目の外では見えない。 */
+.nav .item{border-left:0; padding:10px 16px 10px 19px; overflow:hidden;
+  transition:background-color .25s ease, color .25s ease, padding .3s var(--nav-ease), gap .3s var(--nav-ease);}
+.nav .item .accent{position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--stamp);
+  transform:translateY(100%); pointer-events:none;}
+.nav .item.active .accent{transform:none;}
+.nav .item .lbl{display:inline-block; overflow:hidden; max-width:140px; opacity:1;
+  transition:max-width .3s var(--nav-ease), opacity .2s ease .1s;}
+.badge{margin-left:auto; width:7px; height:7px; border-radius:50%;}
+.badge.stamp{background:var(--stamp);} .badge.gold{background:var(--gold);}
+
+/* フッターは、開いていても折りたたんでいても同じ縦並び(display を切り替えない)。
+   中身の位置(左右の余白)は margin の transition で動かすので、折りたたみボタンが「ぱっと」ではなく滑らかに移動する。 */
+.nav-foot{display:flex; flex-direction:column; padding:12px 0 0; border-top:1px solid var(--line); margin-top:8px;
+  transition:padding .3s var(--nav-ease);}
+.nav-foot > .timer{margin:0 16px; transition:margin .3s var(--nav-ease);}
+.timer{display:flex; align-items:center; gap:9px; cursor:pointer; transition:color .3s ease;}
+.timer .tbody{min-width:0;}
+/* 表示の種類(停止中 / 計測中 / ポモドーロのみ)が変わるときは、文字がクロスフェードする(app.js の paintFooter。毎秒の更新は文字を書き換えるだけ)。
+   ポモドーロの行(.tp-row)が現れる/消えるときは、高さが動いて、上のタブがスライドする */
+.timer .tp-row{overflow:hidden;}
+.timer .dot{width:6px; height:6px; border-radius:50%; background:var(--stamp); flex:none; animation:breathe 2.6s ease-in-out infinite;
+  transition:background-color .3s ease;}
+@keyframes breathe{0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(178,58,46,.35);} 50%{opacity:.55; box-shadow:0 0 0 4px rgba(178,58,46,0);}}
+@media (prefers-reduced-motion:reduce){ .timer .dot{animation:none;} }
+.timer .tl{font-size:10px; color:var(--stamp);}
+.timer .tt{font-size:15px; font-weight:700; line-height:1.3; transition:color .3s ease;}
+.timer .tp{font-size:10px; color:var(--ink-sub);}
+.timer.idle{color:var(--ink-sub);}
+.timer.idle .dot{background:var(--ink-sub); animation:none;}
+
+/* 折りたたみボタンは、ウィンドウが狭いときは(data-forced)消える。display:none で消すと、上にある設定・タイマー表示が
+   ぱっとずれるので、高さ・余白を 0 へ縮めて(=上の要素が滑らかにずれる)、ボタン自体は透明にフェードさせる。
+   max-height はボタンの実際の高さ(アイコン16px + 上下の余白 6px×2 = 28px)に合わせてある。 */
+.collapse{display:flex; align-items:center; gap:8px; margin-top:10px; padding:6px 0; font-size:11px; color:var(--ink-sub);
+  cursor:pointer; user-select:none; background:none; border:0; font-family:inherit;
+  max-height:28px; overflow:hidden; opacity:1; visibility:visible;
+  align-self:flex-start; margin-left:16px;  /* アイコンの位置: 開いているときは左の余白16px、折りたたむと 72px の中央(=28px)へ */
+  transition:gap .3s var(--nav-ease), max-height .3s var(--nav-ease), margin-top .3s var(--nav-ease),
+             margin-left .3s var(--nav-ease), padding .3s var(--nav-ease), opacity .2s ease .1s, visibility 0s;}
+.clbl{display:inline-block; overflow:hidden; white-space:nowrap; max-width:100px; opacity:1;
+  transition:max-width .3s var(--nav-ease), opacity .2s ease .1s;}
+.collapse svg{width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;
+  flex:none; transition:transform .3s var(--nav-ease);}
+@media (any-hover:hover){:where(:root:not(.is-touch)) .collapse:hover{color:var(--ink);}}
+
+/* アイコンレール(手動折りたたみ / 幅が狭い時は自動)。
+   文字は display:none ではなく、幅0+透明にして伸縮させる。アイコンは padding-left で中央に置く(72px の中央)。
+   アクセントは展開時と同じ左辺。 */
+.app[data-layout=rail] .nav{width:72px; padding:14px 0 10px;}
+.app[data-layout=rail] .brand{padding:0 0 14px 22px; gap:0;}
+.app[data-layout=rail] .binfo{max-width:0; opacity:0; transition:max-width .3s var(--nav-ease), opacity .1s ease;}
+/* .lbl はサイドバーの項目名とゲージの見出し文字(今日/今月など)の両方で使うクラスなので、
+   ここでは .nav 配下のものだけに絞る(絞らないと #content 側のゲージ見出しまで消え、
+   CSS Grid の再配置でバーが極端に短くなる不具合が起きる) */
+.app[data-layout=rail] .nav .lbl{max-width:0; opacity:0; transition:max-width .3s var(--nav-ease), opacity .1s ease;}
+.app[data-layout=rail] .clbl{max-width:0; opacity:0; transition:max-width .3s var(--nav-ease), opacity .1s ease;}
+/* .item もナビ項目以外(例: ポモドーロ設定欄)で使われうるクラス名なので .nav に絞る */
+.app[data-layout=rail] .nav .item{gap:0; padding-left:27px;}
+/* badge/timer も他タブで同名クラスが使われる可能性があるため、念のため .nav に絞っておく */
+.app[data-layout=rail] .nav .badge{position:absolute; top:6px; right:8px; margin:0;}
+.app[data-layout=rail] .nav-foot{padding-top:10px;}
+.app[data-layout=rail] .nav-foot > .timer{margin:0;}
+.app[data-layout=rail] .collapse{margin-left:28px;}
+.app[data-layout=rail] .collapse svg{transform:rotate(180deg);} /* 「折りたたむ ‹」→「展開 ›」: 向きは回転で切り替える(パスの入れ替えだと動かない) */
+.app[data-layout=rail] .collapse{gap:0;}
+.app[data-layout=rail] .nav .timer{flex-direction:column; gap:4px;}
+.app[data-layout=rail] .nav .timer .tl, .app[data-layout=rail] .nav .timer .tp{display:none;}
+.app[data-layout=rail] .nav .timer .tt{font-size:10px;}
+.app[data-forced=true] .collapse{max-height:0; margin-top:0; padding-top:0; padding-bottom:0; opacity:0;
+  visibility:hidden; pointer-events:none;
+  transition:gap .3s var(--nav-ease), max-height .3s var(--nav-ease), margin-top .3s var(--nav-ease),
+             margin-left .3s var(--nav-ease), padding .3s var(--nav-ease), opacity .15s ease, visibility 0s linear .3s;}
+
+/* 起動直後の配置は動かさない(app.js が最初の描画のあとに .no-anim を外す) / 動きを減らす設定のときは伸縮もしない */
+.app.no-anim .nav, .app.no-anim .nav *{transition:none !important;}
+@media (prefers-reduced-motion:reduce){ .nav, .nav *{transition:none !important;} }
+
+.main{flex:1; min-width:0;}
+/* container-type は CSS Grid の 1fr トラック(.main)に直接付けると、
+   サイドバー幅(183px/72px)によってサイズ計算が不安定になることがあるため、
+   その内側の普通のブロック要素(#content)に付ける */
+#content{max-width:820px; margin:0 auto; padding:18px 20px 60px; container-type:inline-size;}
+
+/* タブ共通の見出し行 */
+.top{display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px solid var(--ink);}
+.top h1{font-size:16px; font-weight:700; margin:0; letter-spacing:.02em;}
+.top .right{display:flex; gap:16px; font-size:13px; color:var(--ink-sub); align-items:center;}
+.top .pts{color:var(--gold); font-weight:700;}
+
+/* ポイントの増減の演出(components/points.js)。
+   .pts-inv … 「文字色で塗りつぶした面」+「背景色に反転した文字」を載せた層。普段は clip-path で完全に隠れている。
+              増減のたびに、増加は下から上、減少は上から下へ、見える範囲が横切る(JS の Web Animations で clip-path を動かす)。
+   .pts-arrow … ↗ / ↘ の矢印。普段は透明で、増減のときだけ見えて、フェードアウトする。 */
+.pts-live{position:relative; display:inline-block; padding:0 .3em; margin:0 -.3em; white-space:nowrap;}
+.pts-inv{position:absolute; inset:0; background:currentColor; clip-path:inset(100% 0 0 0); pointer-events:none;}
+.pts-inv::after{content:attr(data-text); position:absolute; left:.3em; right:.3em; top:0; bottom:0;
+  color:var(--paper); white-space:nowrap;}
+.pts-arrow{position:absolute; right:100%; top:0; margin-right:.15em; opacity:0; pointer-events:none;}
+.pts-arrow::after{content:attr(data-arrow);}
+
+/* テーマの切り替え: 色(背景・文字・枠・SVG の塗りと線)が一斉にフェードして変わる。
+   フェード中だけ(app.js の applyTheme が <html> に theme-fading を付ける)全要素の transition を置き換える。
+   色の項目だけを並べると、その間は他の transition(サイドバーの幅の伸縮、ポップアップの開閉など)が丸ごと消えて
+   動きが省略されてしまうので、all にして、色以外の動きも(時間とイージングだけ揃えて)動くようにしてある。 */
+html.theme-fading, html.theme-fading *, html.theme-fading *::before, html.theme-fading *::after{
+  transition:all .4s ease !important;
+}
+@media (prefers-reduced-motion:reduce){
+  html.theme-fading, html.theme-fading *, html.theme-fading *::before, html.theme-fading *::after{transition:none !important;}
+}

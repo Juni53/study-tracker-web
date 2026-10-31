@@ -1,0 +1,46 @@
+# main ブランチに push されるたびに、テストを通してから、GitHub Pages に公開する。
+# 事前の設定(1回だけ): リポジトリの Settings → Pages → Build and deployment → Source を「GitHub Actions」にする。
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: テスト(4つのタイムゾーンで)
+        run: npm run test:tz
+      - name: 公開用にビルド(Service Worker の版と保存するファイルの一覧を書き込む)
+        run: node tools/build-pwa.mjs --out dist
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

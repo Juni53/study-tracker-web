@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Study Tracker</title>
+<meta name="description" content="勉強時間とポイントを記録する、ブラウザだけで動く学習記録アプリ">
+<meta name="theme-color" content="#F3F1E9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1B1C1F" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Study Tracker">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/shell.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/views.css">
+</head>
+<body>
+
+<div class="app no-anim" id="app" data-layout="sidebar">
+  <nav class="nav">
+    <div class="brand">
+      <div class="mark">S</div>
+      <div class="binfo"><div class="bname">Study Tracker</div><div class="bver mono">v3.0.0</div></div>
+    </div>
+    <div class="items" id="items"></div>
+    <div class="nav-foot">
+      <div class="timer" title="ストップウォッチを開く"></div>
+      <button class="collapse" id="collapseBtn" title="サイドバーを折りたたむ">
+        <svg viewBox="0 0 24 24" id="collapseIcon"><path d="M15 6l-6 6 6 6"/></svg>
+        <span class="clbl">折りたたむ</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div id="content"></div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

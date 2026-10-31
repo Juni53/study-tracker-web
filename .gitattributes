@@ -1,0 +1,5 @@
+# 改行は LF にそろえる。Windows の .bat だけは CRLF(CRLF でないと、動かないことがある)
+* text=auto eol=lf
+*.bat text eol=crlf
+*.png binary
+*.gz binary

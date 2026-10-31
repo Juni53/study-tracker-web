@@ -1,0 +1,76 @@
+/* Study Tracker v3 - デザイントークン
+   デザイン案(9タブ)と同じ配色・書体をここに集約する。 */
+
+/* フォント: オフライン動作のため、woff2 をここに同梱して @font-face で読む想定。
+   ui/fonts/ に以下を置いてください(手元の環境でGoogle Fontsからダウンロードして配置):
+     ZenKakuGothicNew-Regular.woff2 / -Medium.woff2 / -Bold.woff2
+     JetBrainsMono-Regular.woff2 / -Medium.woff2 / -Bold.woff2
+   ファイルが無い間は、下のフォールバック(システムのゴシック体・等幅体)で表示される。 */
+@font-face{
+  font-family:"Zen Kaku Gothic New"; font-weight:400; font-display:swap;
+  src:url("../fonts/ZenKakuGothicNew-Regular.woff2") format("woff2");
+}
+@font-face{
+  font-family:"Zen Kaku Gothic New"; font-weight:500; font-display:swap;
+  src:url("../fonts/ZenKakuGothicNew-Medium.woff2") format("woff2");
+}
+@font-face{
+  font-family:"Zen Kaku Gothic New"; font-weight:700; font-display:swap;
+  src:url("../fonts/ZenKakuGothicNew-Bold.woff2") format("woff2");
+}
+@font-face{
+  font-family:"JetBrains Mono"; font-weight:400; font-display:swap;
+  src:url("../fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+@font-face{
+  font-family:"JetBrains Mono"; font-weight:500; font-display:swap;
+  src:url("../fonts/JetBrainsMono-Medium.woff2") format("woff2");
+}
+@font-face{
+  font-family:"JetBrains Mono"; font-weight:700; font-display:swap;
+  src:url("../fonts/JetBrainsMono-Bold.woff2") format("woff2");
+}
+
+:root{
+  --paper:#F3F1E9; --paper2:#EAE7DB; --ink:#22252B; --ink-sub:#6B6558; --ink-rgb:34,37,43;
+  --line:#C4C8BE; --stamp:#B23A2E; --gold:#8C6A22;
+  --paper-rgb:243,241,233; --ink-hover:#0F1114; --stamp-hover:#972E24;
+  --ease-out:cubic-bezier(.22,1,.36,1); --ease-in:cubic-bezier(.4,0,1,1);
+  --tag-math:#4A90D9; --tag-eng:#E67E22; --tag-phy:#27AE60; --tag-chem:#8E44AD; --tag-jp:#E74C3C; --tag-oth:#7F8C8D;
+
+  --font-sans:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI",sans-serif;
+  --font-mono:"JetBrains Mono","Consolas",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#1B1C1F; --paper2:#222327; --ink:#EDEAE0; --ink-sub:#9B9689; --ink-rgb:237,234,224;
+    --line:#3A3D3E; --stamp:#D9695C; --gold:#D4B25F;
+    --paper-rgb:27,28,31; --ink-hover:#D6D2C6; --stamp-hover:#C65A4D;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#1B1C1F; --paper2:#222327; --ink:#EDEAE0; --ink-sub:#9B9689; --ink-rgb:237,234,224;
+  --line:#3A3D3E; --stamp:#D9695C; --gold:#D4B25F;
+  --paper-rgb:27,28,31; --ink-hover:#D6D2C6; --stamp-hover:#C65A4D;
+}
+
+/* 入力欄の下線(components.css の .finput)。色を滑らかに変えるため、色のプロパティとして登録しておく */
+@property --fi-line{syntax:"<color>"; inherits:false; initial-value:#C4C8BE;}
+@property --fi-focus{syntax:"<color>"; inherits:false; initial-value:#22252B;}
+
+/* スクロールバー(WebView2/Chromiumの既定の太い丸型ではなく、細いフラットなものに) */
+::-webkit-scrollbar{width:9px; height:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--line); border:2px solid var(--paper); border-radius:0;}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-sub);}
+::-webkit-scrollbar-corner{background:transparent;}
+*{scrollbar-width:thin; scrollbar-color:var(--line) transparent;}
+
+*{box-sizing:border-box;}
+[hidden]{display:none !important;}
+/* タッチしたときの、ブラウザ標準の青いハイライトを出さない(押した感じは :active で表現している) */
+*, *::before, *::after{-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+html{scrollbar-gutter:stable;} /* スクロールバーの出現/消失で幅が変わらないよう、常に領域を確保する */
+body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--font-sans);}
+.mono{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}

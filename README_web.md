@@ -16,7 +16,7 @@ Python 版の UI(HTML/CSS/JS)はそのままで、Python 側(`data_manager.py` /
 | 5 | PWA 化(オフライン・インストール・更新のお知らせ)と、GitHub Pages への公開の仕組み | 完成(Service Worker は、偽の実行環境でのテストのみ。実際の公開・オフライン動作・インストールは、公開後に実機で要確認) |
 | 6 | 初回起動時の案内(「はじめに」。複数ページ: 各タブの説明 → タグ(最初に使う科目を選ぶ) → 注意事項)。試験管理のページから、名前・日付つきで試験を追加できる。設定の「このアプリについて」から、いつでも見直せる | 完了(jsdom でのテストのみ。画面の見た目・スクロール・iPad での表示は、実機で要確認) |
 | 7 | フィードバックタブ(設定タブの上)。フォームの URL を `ui/js/config.js` に入れたときだけ表示 | 完了(URL は未設定のため、いまは非表示。設定のしかたは下) |
-| 8 | 仕上げ | これから |
+| 8 | 仕上げ | 一部完了: フォント(JetBrains Mono だけ同梱)・README・LICENSE(MIT)。これから: 日付をまたぐ起動時処理の検討・実機確認・引き継ぎの更新 |
 
 Python 版 `api.py` の公開メソッドは、すべて移植済みです。Web 版だけの API は、`request_notification_permission`(通知の許可)、
 `get_storage_info`(保存先・容量・永続化の状態)、バックアップまわり(`localApi.js` の `WEB_ONLY_METHODS`)、
@@ -174,3 +174,11 @@ tools/export_desktop_data.py   デスクトップ版の AppData を 1 つの JSO
 どんな値を入れても、テストが通ること(= CI が止まらないこと)は、`tests/config.variants.test.js` が、「空」「URL あり」「URL + 質問番号あり」「https でない値」の4通りで確かめています。
 
 設定すると、初回の案内の「プライバシー」にも、「外へ出るのはフィードバックのリンクを開いたときだけ(バージョンを渡す場合は、そのことも)」の一文が加わります。
+
+## フォント
+
+- 同梱しているのは、**JetBrains Mono**(可変フォント1つ。`ui/fonts/JetBrainsMono-Variable.woff2`、約72KB)だけです。タイマーなどの数字の見た目を、端末によらずそろえるためです。
+- 日本語(Zen Kaku Gothic New の指定)は、同梱していません。端末のフォントで表示されます(同梱すると、文字を絞っても約1.4MB増え、アプリを更新するたびに取り直しになるため)。
+- ライセンスは SIL OFL 1.1 です。`ui/fonts/OFL.txt`(全文と著作権表示)と `ui/fonts/README.txt`(出典・加工)を、フォントと同じ場所に置いてあります。**フォントを入れ替えるときも、同じ形で置いてください。**
+- 作り直すとき: `pip install fonttools brotli` のあと、`python tools/make_fonts.py "JetBrainsMono[wght].ttf"`(元ファイルは google/fonts の `ofl/jetbrainsmono/`)。加工は、形式の変換だけです。
+- 「CSS・HTML が読みにいくファイルは、すべて実在する」ことは、`tests/fonts.test.js` が確かめます(以前は、存在しないフォントを毎回読みにいっていました)。

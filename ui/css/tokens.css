@@ -1,34 +1,13 @@
 /* Study Tracker v3 - デザイントークン
    デザイン案(9タブ)と同じ配色・書体をここに集約する。 */
 
-/* フォント: オフライン動作のため、woff2 をここに同梱して @font-face で読む想定。
-   ui/fonts/ に以下を置いてください(手元の環境でGoogle Fontsからダウンロードして配置):
-     ZenKakuGothicNew-Regular.woff2 / -Medium.woff2 / -Bold.woff2
-     JetBrainsMono-Regular.woff2 / -Medium.woff2 / -Bold.woff2
-   ファイルが無い間は、下のフォールバック(システムのゴシック体・等幅体)で表示される。 */
+/* フォント: 等幅の数字(タイマー・時間・ポイントなど)は、JetBrains Mono を同梱して使う(可変フォント1つで、太さ 100〜800 を持つ。ui/fonts/、ライセンスは OFL.txt)。
+   日本語の本文は、同梱しない(端末にあるフォントで表示する)。下の --font-sans の先頭の Zen Kaku Gothic New は、端末に入っていれば使われるだけ。
+   (以前は、同梱していないフォント(Zen Kaku Gothic New / JetBrains Mono の個別の太さ)を読みにいく指定が残っていて、毎回、読み込みに失敗していた。
+    CSS で url() に書いたファイルが、実際にあることは、tests/fonts.test.js が確かめる) */
 @font-face{
-  font-family:"Zen Kaku Gothic New"; font-weight:400; font-display:swap;
-  src:url("../fonts/ZenKakuGothicNew-Regular.woff2") format("woff2");
-}
-@font-face{
-  font-family:"Zen Kaku Gothic New"; font-weight:500; font-display:swap;
-  src:url("../fonts/ZenKakuGothicNew-Medium.woff2") format("woff2");
-}
-@font-face{
-  font-family:"Zen Kaku Gothic New"; font-weight:700; font-display:swap;
-  src:url("../fonts/ZenKakuGothicNew-Bold.woff2") format("woff2");
-}
-@font-face{
-  font-family:"JetBrains Mono"; font-weight:400; font-display:swap;
-  src:url("../fonts/JetBrainsMono-Regular.woff2") format("woff2");
-}
-@font-face{
-  font-family:"JetBrains Mono"; font-weight:500; font-display:swap;
-  src:url("../fonts/JetBrainsMono-Medium.woff2") format("woff2");
-}
-@font-face{
-  font-family:"JetBrains Mono"; font-weight:700; font-display:swap;
-  src:url("../fonts/JetBrainsMono-Bold.woff2") format("woff2");
+  font-family:"JetBrains Mono"; font-weight:100 800; font-style:normal; font-display:swap;
+  src:url("../fonts/JetBrainsMono-Variable.woff2") format("woff2");
 }
 
 :root{

@@ -31,10 +31,17 @@ test("config.js: フォームの URL と、バージョンを渡す質問の番�
 test("リンク: 空・空白・https でない値・読めない値は「設定なし」(null)。https の URL は通る", () => {
   for (const bad of ["", "   ", undefined, null, "http://example.com/form", "javascript:alert(1)", "forms.gle/abc", "//example.com/x", "https://", "ftp://example.com", "mailto:a@b.c", "データ"]) {
     assert.equal(parseFeedbackUrl(bad), null, `「${bad}」は使えない値`);
-    assert.equal(feedbackLink({ url: bad, versionEntry: "entry.1", version: V }), null);
+    // (feedbackLink の url を省く(undefined)と、config.js の値が使われる。実際の設定に左右されないよう、ここでは undefined は渡さない)
+    if (bad !== undefined) assert.equal(feedbackLink({ url: bad, versionEntry: "entry.1", version: V }), null, `「${bad}」`);
   }
   const ok = feedbackLink({ url: `  ${FORM}  `, versionEntry: "", version: V });
   assert.deepEqual(ok, { href: FORM, withVersion: false, version: null });
+});
+
+test("リンク: 引数を省くと、config.js の値を使う(設定の中身が何でも、同じ規則で決まる)", () => {
+  assert.deepEqual(feedbackLink(), feedbackLink({ url: config.FEEDBACK_URL, versionEntry: config.FEEDBACK_VERSION_ENTRY }));
+  const r = feedbackLink();
+  assert.ok(r === null || (new URL(r.href).protocol === "https:" && typeof r.withVersion === "boolean"));
 });
 
 test("リンク: バージョンの質問の番号(entry.数字)があれば、バージョンだけを入れる(usp=pp_url も付く・元の引数は残る)", () => {

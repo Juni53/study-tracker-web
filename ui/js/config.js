@@ -5,7 +5,7 @@
 //   ・入れると、設定タブの上に「フィードバック」タブが出て、このフォームへのリンクが置かれる。
 //   ・Google フォームの場合: フォームを開き、右上の「⋮」→「事前入力したリンクを取得」から作ったリンク、または、
 //     「送信」→ リンク のリンクを貼る。短縮リンク(forms.gle/…)より、docs.google.com/forms/d/e/…/viewform の形が確実。
-export const FEEDBACK_URL = "https://docs.google.com/forms/d/e/1FAIpQLSe-tOXkGRO-lHFpEabqw0lLSU0LyEf_Ws8kDvp-gux-Ii7IJw/viewform?usp=publish-editor";
+export const FEEDBACK_URL = "";
 
 // (任意)アプリのバージョンを、フォームの1つの質問へ、入力済みの状態で渡したいときの、質問の番号(例: "entry.1234567890")。
 //   ・空のままなら、何も渡さない。入れても、渡すのは「アプリのバージョン」(例: v3.0.0 (build 774a569215f3))だけ。

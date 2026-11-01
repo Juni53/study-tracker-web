@@ -374,9 +374,11 @@ test("試験のページ: 「二学期期末試験 を追加」ボタン → 名
     assert.equal(title(), "試験管理");
     const b = btn("exam");
     assert.equal(b.textContent, "二学期期末試験 を追加");
-    assert.deepEqual([SAMPLE_EXAM.name, SAMPLE_EXAM.date], ["２学期期末試験", "2026-11-24"]);
+    assert.deepEqual([SAMPLE_EXAM.name, SAMPLE_EXAM.date], ["二学期期末試験", "2026-11-24"]);
+    assert.equal(SAMPLE_EXAM.label, `${SAMPLE_EXAM.name} を追加`, "ボタンの文言と、入る名前の表記(漢数字)がずれている");
+    assert.doesNotMatch(SAMPLE_EXAM.name + SAMPLE_EXAM.label, /[０-９0-9]/, "数字(算用数字・全角)が混ざっている");
     b.click(); await settle();
-    assert.deepEqual(asked, [{ name: "２学期期末試験", date: "2026-11-24" }]);
+    assert.deepEqual(asked, [{ name: "二学期期末試験", date: "2026-11-24" }]);
     assert.equal(anyOverlay(), null, "追加画面が出るあいだ、案内が隠れていない");
     b.click(); await settle();                                                  // 追加画面のあいだに、もう一度押されても、2つ目は開かない
     assert.equal(asked.length, 1, "追加画面が二重に開いた");
@@ -400,7 +402,7 @@ test("試験のページ: 「二学期期末試験 を追加」ボタン → 名
 test("試験のページ: 追加済みならボタンは使えない / 渡されていなければ出ない / 日付が過ぎたら出ない", async () => {
   const restore = setClock(NOW);
   try {
-    let { p } = await open({ onAddExam: async () => ({ added: false }) }, { exams: [{ id: 1, name: "２学期期末試験", date: "2026-11-24" }] });
+    let { p } = await open({ onAddExam: async () => ({ added: false }) }, { exams: [{ id: 1, name: "二学期期末試験", date: "2026-11-24" }] });
     await next(4);
     assert.equal(btn("exam").disabled, true);
     assert.match(overlay().textContent, /追加しました/);
@@ -579,7 +581,7 @@ test("試験管理タブ: openAddExam で、名前と日付が入った追加画
 
     let pr = open2();
     assert.ok(root.querySelector("#examOverlay").classList.contains("open"));
-    assert.equal(val("#examName"), "２学期期末試験");
+    assert.equal(val("#examName"), "二学期期末試験");
     assert.deepEqual([val("#examY"), val("#examM"), val("#examD")], ["2026", "11", "24"]);
     assert.equal(val("#examGoalHours"), "25");
     root.querySelector('#examOverlay [data-act="close"]').click();
@@ -597,7 +599,7 @@ test("試験管理タブ: openAddExam で、名前と日付が入った追加画
     pr = open2();
     root.querySelector("#examSaveBtn").click();
     assert.deepEqual(await pr, { added: true });
-    assert.deepEqual(api.get_exams().map((e) => [e.name, e.date]), [["２学期期末試験", "2026-11-24"]]);
+    assert.deepEqual(api.get_exams().map((e) => [e.name, e.date]), [["二学期期末試験", "2026-11-24"]]);
 
     // 画面の「＋ 試験を追加」ボタンは、今までどおり(空の名前・今日の日付)
     root.querySelector("#examAddBtn").click();
@@ -702,7 +704,7 @@ test("案内の「試しに追加」(app.js): 試験管理タブが開いて、�
     const p = app.openExamAddFromGuide({ name: SAMPLE_EXAM.name, date: SAMPLE_EXAM.date });
     await until(() => examBox("#examOverlay.open"), "追加画面");
     assert.equal(activeTab(), "exam");
-    assert.equal(examBox("#examName").value, "２学期期末試験");
+    assert.equal(examBox("#examName").value, "二学期期末試験");
     assert.deepEqual([examBox("#examY").value, examBox("#examM").value, examBox("#examD").value], ["2026", "11", "24"]);
     examBox('#examOverlay [data-act="close"]').click();
     assert.deepEqual(await p, { added: false });
@@ -723,14 +725,14 @@ test("案内 → 試験のページのボタン → 追加画面で保存 → �
   btn("exam").click();
   await until(() => examBox("#examOverlay.open"), "追加画面");
   assert.equal(anyOverlay(), null, "追加画面のあいだ、案内が隠れていない");
-  assert.equal(examBox("#examName").value, "２学期期末試験");
+  assert.equal(examBox("#examName").value, "二学期期末試験");
   examBox("#examSaveBtn").click();
   await until(() => overlay() && activeTab() === "home", "案内に戻る・元のタブへ戻る");
   assert.equal(title(), "試験管理");
   assert.equal(btn("exam").disabled, true);
   assert.match(overlay().textContent, /追加しました/);
   await app.navigate("exam");                                                  // 本当に、試験が登録されている
-  await until(() => document.querySelector("#content .exam-card .name")?.textContent === "２学期期末試験", "登録された試験");
+  await until(() => document.querySelector("#content .exam-card .name")?.textContent === "二学期期末試験", "登録された試験");
   await app.navigate("home");
   await closeAll(); await p;
 });

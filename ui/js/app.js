@@ -9,6 +9,9 @@ import { showBackupBannerIfDue } from "./components/backupBanner.js";
 import { showOnboardingIfFirst } from "./components/onboarding.js";
 import { initInputMode } from "./components/inputMode.js";
 import { initInstall } from "./components/install.js";
+import { buildNavItems } from "./core/nav.js";
+import { feedbackLink } from "./core/feedback.js";
+import { FEEDBACK_URL } from "./config.js";
 import { initPwa } from "./pwa.js";
 import { EASE_IN, EASE_OUT, reduceMotion, visibleBlocks, staggerIn, revealY } from "./components/motion.js";
 import { morphText, initMorph } from "./components/morph.js";
@@ -22,20 +25,14 @@ const ICON = {
   stats: '<path d="M5 20v-9M12 20V5M19 20v-8"/>',
   shop: '<path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
+  chat: '<path d="M4 5h16v11H10l-5 4v-4H4z"/>',
 };
 
-// key: モジュール名(views/<key>.js の render をロードする)
-const NAV = [
-  { key: "home", icon: "home", label: "ホーム" },
-  { key: "timer", icon: "timer", label: "ストップウォッチ" },
-  { key: "log", icon: "log", label: "記録ログ" },
-  { key: "cal", icon: "cal", label: "カレンダー" },
-  { key: "exam", icon: "exam", label: "試験管理" },
-  { key: "stats", icon: "stats", label: "統計" },
-  { key: "shop", icon: "shop", label: "ショップ" },
-  { key: "spacer" },
-  { key: "settings", icon: "gear", label: "設定" },
-];
+// key: モジュール名(views/<key>.js の render をロードする)。並びは core/nav.js
+// 「フィードバック」は、config.js にフォームの URL があるときだけ出す(空、または https の URL でないときは、タブごと出さない)
+const feedbackOn = !!feedbackLink();
+if (FEEDBACK_URL.trim() && !feedbackOn) console.warn("config.js の FEEDBACK_URL は、https:// で始まる URL にしてください(フィードバックのタブは出しません)");
+const NAV = buildNavItems({ feedback: feedbackOn });
 
 const itemsEl = document.getElementById("items");
 const contentEl = document.getElementById("content");

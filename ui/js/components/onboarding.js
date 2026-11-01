@@ -14,12 +14,13 @@
 
 import { canInstall, promptInstall, isStandalone, installHowTo, onInstallStateChange } from "./install.js";
 import { todayIso } from "../core/dates.js";
+import { feedbackLink } from "../core/feedback.js";
 
 const CLOSE_MS = 450; // 閉じるアニメーション(約0.2秒)が終わってから要素を取り除く
 let seq = 0;          // ポップアップごとに、タイトルの id を変える(閉じるアニメーション中のものと重ならないように)
 
 // 試験管理のページの「試しに追加」。名前と日付は、追加のポップアップに、入力済みの状態で出す。日付が過ぎたら、ボタンごと出さない。
-export const SAMPLE_EXAM = { label: "二学期期末試験 を追加", name: "２学期期末試験", date: "2026-11-24" };
+export const SAMPLE_EXAM = { label: "二学期期末試験 を追加", name: "二学期期末試験", date: "2026-11-24" };
 
 const list = (items) => `<ul class="onb-list">${items.map((i) => `<li>${i}</li>`).join("")}</ul>`;
 
@@ -114,7 +115,7 @@ export const PAGES = [
   },
   {
     key: "notes", title: "注意事項",
-    html: () => `
+    html: ({ feedback }) => `
       <section class="onb-sec" data-onb-sec="storage">
         <h3 class="onb-h">データの保存場所</h3>
         <div class="onb-t">記録・ポイント・設定は、いま使っている<b>このブラウザの中</b>にだけ保存されます。別の端末や、別のブラウザとは共有されません。ブラウザの「サイトデータ」を削除すると、記録も消えます。</div>
@@ -139,7 +140,9 @@ export const PAGES = [
       </section>
       <section class="onb-sec" data-onb-sec="privacy">
         <h3 class="onb-h">プライバシー</h3>
-        <div class="onb-t">記録や設定は、外部のサーバーへ送られません。すべて、この端末の中で処理されます。アプリの新しい版を確認するために、このサイトへ接続することはありますが、記録は含まれません。</div>
+        <div class="onb-t">記録や設定は、外部のサーバーへ送られません。すべて、この端末の中で処理されます。アプリの新しい版を確認するために、このサイトへ接続することはありますが、記録は含まれません。${feedback
+          ? ` 外へ出るのは、「フィードバック」タブのリンクを開いたときだけです(フォームのページ=外部のサービスへ移動します${feedback.withVersion ? "。そのとき、アプリのバージョンだけがフォームに渡されます" : ""})。`
+          : ""}</div>
       </section>`,
   },
 ];
@@ -151,7 +154,7 @@ export async function showOnboardingIfFirst(api, opts = {}) {
   return showOnboarding(api, { ...opts, first: true });
 }
 
-export function showOnboarding(api, { first = false, onOpenBackup = null, onAddExam = null, doc = document } = {}) {
+export function showOnboarding(api, { first = false, onOpenBackup = null, onAddExam = null, feedback = feedbackLink(), doc = document } = {}) {
   return new Promise((resolve) => {
     const id = ++seq;
     const overlay = doc.createElement("div");
@@ -284,7 +287,7 @@ export function showOnboarding(api, { first = false, onOpenBackup = null, onAddE
       if (cleanup) { cleanup(); cleanup = null; }
       idx = i;
       const page = PAGES[i];
-      body.innerHTML = page.html({ first, sampleExam: typeof onAddExam === "function" && SAMPLE_EXAM.date >= todayIso() });
+      body.innerHTML = page.html({ first, feedback, sampleExam: typeof onAddExam === "function" && SAMPLE_EXAM.date >= todayIso() });
       body.scrollTop = 0;
       titleEl.textContent = page.title;
       stepEl.textContent = `${i + 1} / ${PAGES.length}`;

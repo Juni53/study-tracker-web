@@ -7,6 +7,7 @@ import { expandIn, collapseOut, finished, growIn, shrinkOut, captureRects, playF
 import { bindDisclosure } from "../components/disclosure.js";
 import { bindRadioGroup } from "../components/radioGroup.js";
 import { BUILD_ID, checkNow, isPwaActive } from "../pwa.js";
+import { APP_VERSION } from "../core/appInfo.js";
 import { canInstall, promptInstall, isStandalone, installHowTo, onInstallStateChange } from "../components/install.js";
 import { showOnboarding } from "../components/onboarding.js";
 import { makeSortable } from "../components/sortable.js";
@@ -104,7 +105,7 @@ export async function render(root, api) {
 
     <div class="sect" style="border-bottom:none;">
       <div class="sect-lbl">このアプリについて</div>
-      <div class="about">バージョン <b>v3.0.0</b> <span class="mono" id="buildId"></span></div>
+      <div class="about">バージョン <b>${APP_VERSION}</b> <span class="mono" id="buildId"></span></div>
       <div class="about" id="installRow"></div>
       <div class="about"><button class="btn muted small" id="onboardingBtn">はじめに(使い方の案内)を見る</button></div>
       <div class="about" id="updateRow" hidden><button class="btn muted small" id="updateCheckBtn">最新版を確認</button> <span id="updateResult"></span></div>

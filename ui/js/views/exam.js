@@ -7,7 +7,12 @@ import { showConfirm } from "../components/dialog.js";
 import { createFormError } from "../components/formError.js";
 import { validateExamForm } from "../components/validate.js";
 
-export function onLeave() {}
+// 初回の案内(components/onboarding.js)などから、「試験を追加」のポップアップを、名前と日付を入れた状態で開くための入口。
+// 試験管理タブが表示されているときだけ使える(app.js の openExamAddFromGuide が、タブを開いてから呼ぶ)。
+// 戻り値は、ポップアップが閉じたときに解決する Promise({ added: 保存して追加したか })。表示されていなければ null。
+let current = null;
+export function openAddExam(prefill = {}) { return current ? current.openAdd(prefill) : null; }
+export function onLeave() { current = null; }
 
 function todayIso() {
   const d = new Date();
@@ -76,8 +81,15 @@ export async function render(root, api) {
   const examErr = createFormError(root.querySelector("#examErr"));
   examErr.watch(Object.values(examFields));
 
+  // ポップアップを閉じる(保存したときは added: true)。外から開かれていたときは、閉じたことを待っている相手に知らせる
+  let waiter = null;
+  function finishWait(added) { if (waiter) { const done = waiter; waiter = null; done({ added }); } }
+  function closePopup(added = false) {
+    root.querySelector("#examOverlay").classList.remove("open");
+    finishWait(added);
+  }
   root.querySelectorAll(".modal-overlay").forEach((ov) => {
-    ov.addEventListener("click", (e) => { if (e.target === ov || e.target.dataset.act === "close") ov.classList.remove("open"); });
+    ov.addEventListener("click", (e) => { if (e.target === ov || e.target.dataset.act === "close") closePopup(false); });
   });
 
   let exams = [];
@@ -189,17 +201,22 @@ export async function render(root, api) {
 
   // ── 追加/編集 ──
   let editingExam = null;
-  function openAdd() {
+  // prefill: { name, date: "YYYY-MM-DD" }(省くと、名前は空・日付は今日)。外から開いたときは、閉じるまで待てる Promise を返す
+  function openAdd(prefill = {}) {
     editingExam = null;
     root.querySelector("#examModalTitle").textContent = "試験を追加";
-    root.querySelector("#examName").value = "";
+    root.querySelector("#examName").value = prefill.name ?? "";
+    const m = typeof prefill.date === "string" ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(prefill.date) : null;
     const t = new Date();
-    root.querySelector("#examY").value = t.getFullYear();
-    root.querySelector("#examM").value = String(t.getMonth() + 1).padStart(2, "0");
-    root.querySelector("#examD").value = String(t.getDate()).padStart(2, "0");
+    root.querySelector("#examY").value = m ? m[1] : t.getFullYear();
+    root.querySelector("#examM").value = m ? m[2] : String(t.getMonth() + 1).padStart(2, "0");
+    root.querySelector("#examD").value = m ? m[3] : String(t.getDate()).padStart(2, "0");
     root.querySelector("#examGoalHours").value = 25;
     examErr.reset();
+    if (waiter) closePopup(false);                 // 前の待ち手が残っていれば、先に解決しておく
+    const p = new Promise((resolve) => { waiter = resolve; });
     root.querySelector("#examOverlay").classList.add("open");
+    return p;
   }
   function openEdit(id) {
     const e = exams.find((x) => x.id === id);
@@ -215,7 +232,8 @@ export async function render(root, api) {
     examErr.reset();
     root.querySelector("#examOverlay").classList.add("open");
   }
-  root.querySelector("#examAddBtn").addEventListener("click", openAdd);
+  root.querySelector("#examAddBtn").addEventListener("click", () => { openAdd(); }); // 画面のボタンからは、待たない(waiter は閉じたときに自動で片付く)
+  current = { openAdd };
   root.querySelector("#examSaveBtn").addEventListener("click", async () => {
     const v = validateExamForm({
       name: examFields.name.value, y: examFields.y.value, m: examFields.m.value, d: examFields.d.value,
@@ -233,10 +251,14 @@ export async function render(root, api) {
     let added = null;
     if (editingExam) await api.update_exam(editingExam.id, v.name, v.dateStr, v.goalMinutes);
     else added = await api.add_exam(v.name, v.dateStr, v.goalMinutes);
+    // 保存したときは、画面の描き直しが終わってから、閉じたことを待っている相手(案内)に知らせる
+    // (先に知らせると、案内が元のタブへ戻る処理で、この画面が消えたあとに、描き直しが走ってしまう)
     root.querySelector("#examOverlay").classList.remove("open");
-    await reload();
-    // 追加したカードを、周りを押しのけながら拡大・フェードインで出す(編集のときは出さない)
-    if (added && added.id != null) growIn(root.querySelector(`.exam-card[data-exam-id="${added.id}"]`));
+    try {
+      await reload();
+      // 追加したカードを、周りを押しのけながら拡大・フェードインで出す(編集のときは出さない)
+      if (added && added.id != null) growIn(root.querySelector(`.exam-card[data-exam-id="${added.id}"]`));
+    } finally { finishWait(!!added); }
   });
 
   // ── 削除(ダイアログは components/dialog.js に統一。danger なので、最初のフォーカスと Enter はキャンセル) ──

@@ -9,7 +9,7 @@ import { parseDuration, toPyFloat, pyInt } from "./duration.js";
 import { calcBasePoints, calcManualPoints } from "./formula.js";
 import { pyRound, floorDiv } from "./num.js";
 import { unsupportedPlatform } from "./platform.js";
-import { F } from "./defaults.js";
+import { F, ONBOARDING_TAGS } from "./defaults.js";
 import { nowIsoSeconds, isValidIso } from "./dates.js";
 import { buildBackup, backupFilename, parseBackupText, summarizeFiles, defaultBackupPrefs, isBackupDue, daysSinceBackup } from "./backup.js";
 import { todayIso, addDaysIso, daysBetween, weekdayMon0 } from "./dates.js";
@@ -31,7 +31,7 @@ export const WEB_ONLY_METHODS = [
   "request_notification_permission", "get_storage_info", "reload_app",
   "get_backup_status", "save_backup", "set_backup_interval", "snooze_backup_reminder",
   "pick_backup_file", "apply_backup", "undo_last_restore",
-  "get_onboarding", "complete_onboarding",
+  "get_onboarding", "complete_onboarding", "get_onboarding_tags", "apply_onboarding_tags",
 ];
 
 export class NotPortedError extends Error {
@@ -257,6 +257,56 @@ export class Api {
   complete_onboarding() {
     if (!this.get_onboarding().done) this.store.setMeta("onboarding", { seen_at: nowIsoSeconds() });
     return { ok: true };
+  }
+
+  // 案内の「最初に使う科目」(タグ)。候補は ONBOARDING_TAGS の9つ。
+  //   get: 候補ごとに、いま持っているか(checked)と、記録で使っているか(in_use。使っているタグは外せない)
+  //   apply: 選ばれた名前に合わせる。足りないものは足し(「その他」があれば、その手前に入れる)、
+  //          外されたものは、記録で使っていなければ消す(使っていれば、残して kept に入れる)。
+  //          候補にない(自分で作った)タグは、いっさい触らない。差が無ければ、何も書き込まない。
+  get_onboarding_tags() {
+    const used = new Set();
+    for (const r of this.dm.records) for (const id of (r.tag_ids || [])) used.add(id);
+    return {
+      tags: ONBOARDING_TAGS.map(({ name, color }) => {
+        const have = this.dm.tags.filter((t) => t.name === name);
+        return { name, color, checked: have.length > 0, in_use: have.some((t) => used.has(t.id)) };
+      }),
+    };
+  }
+
+  apply_onboarding_tags(names) {
+    const known = new Set(ONBOARDING_TAGS.map((t) => t.name));
+    if (!Array.isArray(names) || names.some((n) => typeof n !== "string" || !known.has(n))) {
+      return { ok: false, error: "選べるタグの名前ではありません" };
+    }
+    const want = new Set(names);
+    const used = new Set();
+    for (const r of this.dm.records) for (const id of (r.tag_ids || [])) used.add(id);
+
+    const added = [], removed = [], kept = [];
+    const newIds = [];
+    for (const { name, color } of ONBOARDING_TAGS) {
+      const have = this.dm.tags.filter((t) => t.name === name);
+      if (want.has(name)) {
+        if (!have.length) { newIds.push(this.dm.addTag(name, color).id); added.push(name); }
+      } else if (have.length) {
+        if (have.some((t) => used.has(t.id))) { kept.push(name); continue; }
+        for (const t of have) this.dm.deleteTag(t.id);
+        removed.push(name);
+      }
+    }
+    // 足したタグは末尾に付くので、「その他」(元からあるもの)があれば、その手前へ移す
+    if (newIds.length) {
+      const fresh = new Set(newIds);
+      const old = this.dm.tags.filter((t) => !fresh.has(t.id));
+      const idx = old.findIndex((t) => t.name === "その他");
+      if (idx >= 0) {
+        const order = [...old.slice(0, idx), ...this.dm.tags.filter((t) => fresh.has(t.id)), ...old.slice(idx)];
+        this.dm.reorderTags(order.map((t) => t.id));
+      }
+    }
+    return { ok: true, added, removed, kept };
   }
 
   // ── 完全バックアップ・復元(Web 版だけの API) ──

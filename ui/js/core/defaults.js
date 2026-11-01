@@ -39,6 +39,20 @@ export const DEFAULT_SETTINGS = {
   },
 };
 
+// 初回の案内の「最初に使う科目」の候補(この順に並べる)。色は設定ページのタグの色の選択肢から。
+// 既定のタグ(下の DEFAULT_TAGS)の6つは、色も同じ。生物・社会・情報は、案内で選んだときに足す。
+export const ONBOARDING_TAGS = [
+  { name: "国語", color: "#E74C3C" },
+  { name: "数学", color: "#4A90D9" },
+  { name: "英語", color: "#E67E22" },
+  { name: "生物", color: "#16A085" },
+  { name: "化学", color: "#8E44AD" },
+  { name: "物理", color: "#27AE60" },
+  { name: "社会", color: "#2E4C6D" },
+  { name: "情報", color: "#8B5E3C" },
+  { name: "その他", color: "#7F8C8D" },
+];
+
 export const DEFAULT_TAGS = [
   { id: 1, name: "数学", color: "#4A90D9" },
   { id: 2, name: "英語", color: "#E67E22" },

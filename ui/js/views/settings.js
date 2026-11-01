@@ -1,5 +1,5 @@
 // Study Tracker v3 - 設定タブ
-import { applyTheme } from "../app.js";
+import { applyTheme, openExamAddFromGuide } from "../app.js";
 import { mountPoints } from "../components/points.js";
 import { showAlert, showConfirm, showChoice } from "../components/dialog.js";
 import { showToast } from "../components/celebrate.js";
@@ -501,7 +501,11 @@ export async function render(root, api) {
   onInstallStateChange(paintInstall);
   // 初回に出る案内を、いつでも見直せる(見たことの記録は変えない)。「データ管理を開く」は、このページの中で移る
   root.querySelector("#onboardingBtn").addEventListener("click", () => {
-    showOnboarding(api, { first: false, onOpenBackup: () => root.querySelector("#dataSect")?.scrollIntoView?.({ block: "start", behavior: reduceMotion() ? "auto" : "smooth" }) });
+    showOnboarding(api, {
+      first: false,
+      onOpenBackup: () => root.querySelector("#dataSect")?.scrollIntoView?.({ block: "start", behavior: reduceMotion() ? "auto" : "smooth" }),
+      onAddExam: openExamAddFromGuide,
+    });
   });
   if (isPwaActive()) {
     root.querySelector("#updateRow").hidden = false;

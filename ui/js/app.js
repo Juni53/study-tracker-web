@@ -149,6 +149,18 @@ async function openDataManagement() {
   document.getElementById("dataSect")?.scrollIntoView?.({ block: "start", behavior: reduceMotion() ? "auto" : "smooth" });
 }
 
+// 案内の「試しに追加」: 試験管理タブを開いて、名前と日付を入れた「試験を追加」のポップアップを出す。
+// ポップアップが閉じたら、元のタブへ戻って、{ added: 保存して追加したか } を返す(案内は、そのあいだ隠れていて、同じページに戻る)
+export async function openExamAddFromGuide(prefill) {
+  const back = activeKey;
+  await navigate("exam");
+  const mod = await loadView("exam");
+  const waiting = mod && typeof mod.openAddExam === "function" ? mod.openAddExam(prefill) : null;
+  const result = waiting ? await waiting : null;
+  if (back && back !== "exam") await navigate(back);
+  return result;
+}
+
 // ── レイアウト(折りたたみ / 自動アイコンレール) ──
 let collapsed = false;
 let lastLayout = null;
@@ -252,7 +264,7 @@ loadPrefs(api).then(refreshInhibit);
 // (周期がたっていれば、右下に小さく出す。起動時に1回だけ。案内の上に重ならないようにする)。
 // 案内が出せなくても、リマインダーとアプリ本体は動く。
 (async () => {
-  try { await showOnboardingIfFirst(api, { onOpenBackup: openDataManagement }); } catch (e) { console.error("案内を出せませんでした", e); }
+  try { await showOnboardingIfFirst(api, { onOpenBackup: openDataManagement, onAddExam: openExamAddFromGuide }); } catch (e) { console.error("案内を出せませんでした", e); }
   showBackupBannerIfDue(api);
 })();
 

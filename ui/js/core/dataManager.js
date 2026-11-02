@@ -248,8 +248,11 @@ export class DataManager {
     return [true, null];
   }
 
-  // 起動時に1回呼ぶ。「勉強も起動もなかった日」が直近で続いている分だけ、所持しているさぼり券を新しい日から順に
-  // 自動消費してストリークを保護する。ここだけがさぼり券を消費する唯一の経路。ポイント消失の判定には影響しない。
+  // 起動時に呼ぶ(日付が変わったときにも呼ぶ。同じ日に何度呼んでも、二重には適用されない)。
+  // 「勉強の記録がなかった日」が直近で続いている分だけ、所持しているさぼり券を新しい日から順に自動消費してストリークを保護する。
+  // ここだけがさぼり券を消費する唯一の経路。ポイント消失の判定には影響しない。
+  // ★Python 版との違い(意図した変更): Python 版は「起動だけはしていた日(launch_log にある日)」を対象外にして、そこで遡るのをやめていた。
+  //   Web 版は、アプリを開いただけの日も、勉強の記録がなければ、さぼり券の対象にする。(起動ログ launch_log は、データの互換のために、今までどおり記録する)
   autoApplySabori() {
     let launchLog = new Set(this._jload(F.launchLog, () => []));
     const dateSet = new Set(this.records.map((r) => r.date));
@@ -262,8 +265,7 @@ export class DataManager {
       let d = addDaysIso(today, -1);
       for (let i = 0; i < 30; i++) {            // 直近30日まで遡って確認すれば十分
         if (dateSet.has(d) || saboriLog.has(d)) break;   // 既にカバー済みの日に達したら、それより前は無関係
-        if (launchLog.has(d)) break;                      // 起動だけはしていた日は対象外
-        gaps.push(d);
+        gaps.push(d);                                     // 起動しただけの日も、記録が無ければ対象(launchLog は見ない)
         d = addDaysIso(d, -1);
       }
     }
@@ -628,8 +630,9 @@ export class DataManager {
 
   // 起動時にまとめて実行
   runStartupTasks() {
-    this.autoApplySabori();
+    const sabori = this.autoApplySabori();
     this.applyDecay();
+    return { sabori };   // 今回、さぼり券を使った日(ない場合は [])
   }
 
   // ── カレンダー ──

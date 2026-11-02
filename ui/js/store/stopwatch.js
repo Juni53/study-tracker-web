@@ -215,6 +215,13 @@ function notify() {
   }
 }
 
+// 計測の途中か(動いている、または、一時停止中で、まだ保存していない計測がある)。ポモドーロだけが動いているときも含む。
+// 再読み込みで失われるので、ブラウザの「このページを離れますか」の確認(components/leaveGuard.js)と、
+// 日付が変わったときの更新の保留(components/dayWatcher.js)に使う。
+export function hasActiveSession() {
+  return stopwatch.running || stopwatch.pomodoro.running || stopwatch.startDate !== null;
+}
+
 export function subscribe(fn) {
   listeners.add(fn);
   return () => listeners.delete(fn);

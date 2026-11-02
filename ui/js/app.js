@@ -2,7 +2,7 @@
 // サイドバーは固定で、#content の中身だけをタブごとに差し替える。
 
 import { api } from "./api.js";
-import { stopwatch, subscribe } from "./store/stopwatch.js";
+import { stopwatch, subscribe, hasActiveSession } from "./store/stopwatch.js";
 import { loadPrefs } from "./store/pomodoroPrefs.js";
 import { startAlerts, refreshInhibit } from "./store/pomodoroAlerts.js";
 import { showBackupBannerIfDue } from "./components/backupBanner.js";
@@ -10,6 +10,9 @@ import { showOnboardingIfFirst } from "./components/onboarding.js";
 import { initInputMode } from "./components/inputMode.js";
 import { initInstall } from "./components/install.js";
 import { buildNavItems } from "./core/nav.js";
+import { todayIso } from "./core/dates.js";
+import { startDayWatcher } from "./components/dayWatcher.js";
+import { installLeaveGuard } from "./components/leaveGuard.js";
 import { feedbackLink } from "./core/feedback.js";
 import { FEEDBACK_URL } from "./config.js";
 import { initPwa } from "./pwa.js";
@@ -105,6 +108,7 @@ async function fadeOutContent() {
 
 let navSeq = 0; // 切り替え中にさらに別のタブが押されたとき、古い切り替えを打ち切るための番号
 let activeKey = null;
+let dayWatcher = null; // 日付の見張り(下で起動する)。タブを描き直したことを知らせる
 
 export async function navigate(key) {
   if (key === activeKey) return; // 同じタブをもう一度押しても、何も起きない(アニメーションも再生しない)
@@ -136,8 +140,27 @@ export async function navigate(key) {
       staggerIn(visibleBlocks(contentEl)); // 先にアニメーションを作ってから(=最初のコマは透明)表示に戻すので、ちらつかない
       contentEl.style.visibility = "";
       contentEl.style.pointerEvents = "";
+      if (dayWatcher) dayWatcher.viewRendered();
     }
   }
+}
+
+// 開いているタブを、同じタブのまま描き直す(日付が変わったとき、「今日」の表示を新しくする)。切り替え中なら、何もしない。
+export async function refreshActiveView() {
+  const key = activeKey;
+  if (!key || contentEl.style.pointerEvents === "none") return false;
+  activeKey = null; // navigate の「同じタブなら何もしない」を外す
+  await navigate(key);
+  return true;
+}
+
+// 画面を、勝手に描き直してよいか(使っている最中でないか)。ポップアップが開いている間と、入力中は、よくない。
+export function viewIsIdle(doc = document) {
+  if (doc.querySelector(".modal-overlay.open")) return false;
+  const a = doc.activeElement;
+  if (a && a.closest && a.closest("#content") && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false;
+  if (contentEl.style.pointerEvents === "none") return false;
+  return true;
 }
 
 // 案内の「データ管理を開く」: 設定タブを開いて、データ管理の項目まで移る
@@ -257,6 +280,17 @@ initInputMode();
 initInstall();
 initPwa();
 loadPrefs(api).then(refreshInhibit);
+// ストップウォッチ(ポモドーロ)の計測の途中で、再読み込み・閉じる・離れる、をしようとしたら、ブラウザの確認を出す(計測は、メモリの中だけにあるため)
+installLeaveGuard({ isActive: hasActiveSession });
+
+// 日付が変わったら、起動時処理(さぼり券の自動適用・ポイントの消失の判定)をやり直して、画面を更新する(ストップウォッチが動いている間は保留して、お知らせを出す)。
+// 起動時処理のやり直しのあとで、バックアップのリマインダーも、もう一度判定する。
+dayWatcher = startDayWatcher({
+  api, today: todayIso, isBusy: hasActiveSession, subscribeBusy: subscribe,
+  isIdle: viewIsIdle, refresh: refreshActiveView,
+  onRolled: () => showBackupBannerIfDue(api),
+});
+
 // 起動時のお知らせ: 初めてのときは、先に「はじめに」の案内を出し、閉じたあとで、バックアップのリマインダーを出す
 // (周期がたっていれば、右下に小さく出す。起動時に1回だけ。案内の上に重ならないようにする)。
 // 案内が出せなくても、リマインダーとアプリ本体は動く。

@@ -1,5 +1,5 @@
 // 状態を持つ処理の照合: Python 版で台本どおりに動かした結果(戻り値と保存データ)と、JS 版を比べる。
-// 正解データは tools/golden/gen_scenarios.py で作る。台本の "init" はアプリの起動(保存データを読み直し、起動時の処理を実行)。
+// 正解データは tools/golden/gen_scenarios.py で作る(Python 版のコピーに、Web 版の意図した違い=tools/golden/web_divergences.py を当てて動かす。README_web.md の「Python 版との意図した違い」)。台本の "init" はアプリの起動(保存データを読み直し、起動時の処理を実行)。
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

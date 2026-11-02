@@ -200,7 +200,7 @@ export async function render(root, api) {
     $("#shSabori").innerHTML = `
       <div class="sh-sabori-main">
         <div class="sh-sabori-head"><span class="name">🎟 さぼり券</span><span class="owned mono">所持 ${s.owned}/${s.max}枚</span></div>
-        <div class="sh-sabori-note">勉強もアプリの起動もなかった日に自動で使われ、連続記録を守ります(最大${s.max}枚まで所持)</div>
+        <div class="sh-sabori-note">勉強の記録がなかった日(アプリを開いただけの日も)に自動で使われ、連続記録を守ります(最大${s.max}枚まで所持)</div>
       </div>
       <div class="sh-sabori-buy"><span class="unit mono">${s.price.toLocaleString()}P</span>${btn}</div>`;
   }

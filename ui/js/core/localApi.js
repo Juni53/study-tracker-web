@@ -31,7 +31,7 @@ export const WEB_ONLY_METHODS = [
   "request_notification_permission", "get_storage_info", "reload_app",
   "get_backup_status", "save_backup", "set_backup_interval", "snooze_backup_reminder",
   "pick_backup_file", "apply_backup", "undo_last_restore",
-  "get_onboarding", "complete_onboarding", "get_onboarding_tags", "apply_onboarding_tags",
+  "get_onboarding", "complete_onboarding", "get_onboarding_tags", "apply_onboarding_tags", "run_day_rollover",
 ];
 
 export class NotPortedError extends Error {
@@ -242,6 +242,15 @@ export class Api {
   set_idle_inhibit(on) { return this.platform.setWakeLock(on); }
   // 通知の許可を求める(ユーザーの操作の直後に呼ぶ)。Web 版だけの API。
   async request_notification_permission() { return { permission: await this.platform.requestNotificationPermission() }; }
+
+  // ── 日付が変わったとき(Web 版だけの API) ──
+  // アプリを開いたまま日付をまたいだときに、起動時処理(さぼり券の自動適用 → ポイントの消失の判定)をもう一度実行する。
+  // 同じ日に何度呼んでも、二重には適用されない(呼び出し側: components/dayWatcher.js)。
+  // 戻り値の sabori_applied は、今回さぼり券を使った日。
+  run_day_rollover() {
+    const { sabori } = this.dm.runStartupTasks();
+    return { ok: true, sabori_applied: sabori, points_balance: this.dm.points.balance };
+  }
 
   // ── 初回起動時の案内(Web 版だけの API) ──
   // 「案内を見たか」は、設定(settings.json)ではなく、バックアップの対象外の「メタ情報」に持つ

@@ -34,7 +34,13 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--seeds", type=int, default=10, help="乱数の場面の数")
     ap.add_argument("--days", type=int, default=90, help="乱数の場面の長さ(日)")
+    ap.add_argument("--pure-python", action="store_true",
+                    help="Web 版の意図した違い(tools/golden/web_divergences.py)を当てず、元の Python 版のまま動かす")
     args = ap.parse_args()
+    if not args.pure_python:
+        # Web 版で意図して変えた動作を、Python 版の「コピー」に当ててから動かす(元のフォルダは書き換えない)
+        from web_divergences import patched_copy
+        args.src = patched_copy(args.src)
 
     tmp = tempfile.mkdtemp(prefix="st_scn_")
     os.environ["HOME"] = tmp

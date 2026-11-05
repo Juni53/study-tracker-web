@@ -36,6 +36,7 @@ export const DEFAULT_SETTINGS = {
     volume: 60,             // 音量 0〜100
     desktop_notify: true,   // フェーズ切り替えの通知(アプリが前面にないときだけ)
     idle_inhibit: false,    // 計測中は、画面の消灯・スリープを防ぐ
+    // (待機画面の表示 standby_mode は、ここに入れない。選んだときだけ保存し、無ければ "normal"。store/pomodoroPrefs.js。Python 版の設定に無い項目を、既定値で増やさないため)
   },
 };
 

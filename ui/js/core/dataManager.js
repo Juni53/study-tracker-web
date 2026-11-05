@@ -8,7 +8,7 @@
 
 import { F, DEFAULT_SETTINGS, DEFAULT_TAGS } from "./defaults.js";
 import { calcBasePoints, calcManualPoints } from "./formula.js";
-import { pyRound, floorDiv, floorMod, pyStrip } from "./num.js";
+import { pyRound, roundHalfUp, floorDiv, floorMod, pyStrip } from "./num.js";
 import { toPyFloat, pyInt, pyFloat } from "./duration.js";
 import { csvRow, fmtPyFloat, parseCsv, decodeCsvBytes, CsvError } from "./csv.js";
 import { isValidIso } from "./dates.js";
@@ -302,6 +302,8 @@ export class DataManager {
 
   // ── ポイントの消失(decay) ──
   // 重要: さぼり券・アプリ起動の有無に関係なく、「実際に学習した最後の日」からの空白日数だけで判定する。
+  // ★Python 版との違い(意図した変更): 1 日ぶんのペナルティの金額は、残高 × 割合を四捨五入した「整数」(Python 版は小数第 2 位まで)。
+  //   0 に丸まる少ない残高は、減らない(割合 2% なら 25 ポイント未満)。tools/golden/web_divergences.py・README_web.md にも書いてある。
   applyDecay() {
     const today = todayIso();
     const decayLog = this._jload(F.decay, () => ({ last_applied: "" }));
@@ -323,7 +325,7 @@ export class DataManager {
       const lastApplied = pyGet(decayLog, "last_applied", "");
       const penaltyDays = lastApplied ? daysBetween(lastApplied, today) : gap - decayDays;
       for (let i = 0; i < Math.max(0, penaltyDays); i++) {
-        const decay = pyRound(this.points.balance * rate, 2);
+        const decay = roundHalfUp(this.points.balance * rate);   // 金額は、四捨五入した整数(Python 版は小数第 2 位まで。意図した違い)
         if (decay > 0) this._addPoints(-decay, `⚠️ サボりペナルティ (-${fmt0f(rate * 100)}%/日)`);
       }
     }
@@ -344,7 +346,7 @@ export class DataManager {
     if (gap > decayDays) {
       const penaltyN = gap - decayDays;
       for (let i = 0; i < penaltyN; i++) {
-        const decay = pyRound(this.points.balance * rate, 2);
+        const decay = roundHalfUp(this.points.balance * rate);   // 同上(★Python 版との違い。四捨五入した整数)
         if (decay > 0) this._addPoints(-decay, `⚠️ サボりペナルティ(過去記録分) (-${fmt0f(rate * 100)}%/日)`);
       }
     }

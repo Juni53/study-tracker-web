@@ -24,6 +24,16 @@ export function pyRound(x, nd = 0) {
   return r === 0 ? 0 : (neg ? -r : r);          // -0 は返さない(Python の整数 0 と揃える)
 }
 
+// 四捨五入して整数にする(ちょうど半分は切り上げ: 0.5 → 1, 2.5 → 3, 12.5 → 13)。
+// pyRound(x, 0) は Python と同じ「偶数丸め」(2.5 → 2)で、別物。こちらは、ふつうの四捨五入が欲しいときに使う
+// (さぼりペナルティの金額。Python 版との意図した違い。tools/golden/web_divergences.py)。
+// 計算の途中のごく小さな誤差(25.499999999999996 など)で、半分の判定が狂わないよう、小数第 9 位で丸めてから判定する。
+export function roundHalfUp(x) {
+  if (!Number.isFinite(x)) return x;
+  const r = Math.floor(Number(Math.abs(x).toFixed(9)) + 0.5);
+  return r === 0 ? 0 : (x < 0 ? -r : r);          // -0 は返さない
+}
+
 // Python の // と % (負の数でも床の向き。JS の % は 0 方向なので別物)
 // 注意: 小数の // は、Math.floor(a / b) とは一致しないことがある(例: Python の 1 // 0.1 は 9、Math.floor(1 / 0.1) は 10)。
 // CPython の float_divmod と同じ手順で計算する。b が 0 のときは呼ぶ側で除外すること。

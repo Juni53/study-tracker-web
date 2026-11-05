@@ -1,0 +1,91 @@
+/* 待機画面(全画面)。components/standby.js。
+   2 つの表示: data-mode="normal"(テーマ色。ライト/ダークは、アプリの設定に従う)/ data-mode="oled"(有機EL向け。背景は真っ黒・文字は抑えた明るさ・細い線・表示がゆっくり動く)。 */
+
+/* 待機画面を開いている間は、後ろのページのスクロールバーを出さない。tokens.css の html{scrollbar-gutter:stable}(スクロールバー用の領域を常に確保する指定)は、
+   overflow:hidden でも領域を残すので、ここでは解除する(解除しないと、画面の右端が、細い帯のように空く。実際のブラウザで確認した) */
+html.standby-open{scrollbar-gutter:auto;}
+html.standby-open, html.standby-open body{overflow:hidden;}
+
+.standby{
+  position:fixed; inset:0; z-index:1000;                       /* 右下のお知らせ(.notice-host の 900)・ポップアップ(50)より前 */
+  height:100vh; height:100dvh; overflow:hidden; box-sizing:border-box;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:var(--sb-bg); color:var(--sb-ink);
+  user-select:none; -webkit-user-select:none; touch-action:manipulation; outline:none;
+  cursor:default;
+}
+/* 色は、表示の種類ごとの変数で決める(中の部品は、変数だけを見る) */
+.standby[data-mode="normal"]{
+  --sb-bg:var(--paper); --sb-ink:var(--ink); --sb-sub:var(--ink-sub);
+  --sb-accent:var(--stamp); --sb-break:var(--gold); --sb-track:var(--paper2); --sb-line:var(--line);
+  --sb-ring-w:7;
+}
+.standby[data-mode="oled"]{
+  --sb-bg:#000; --sb-ink:#bdbdbd; --sb-sub:#6f6f6f;           /* 背景は 0(発光しない)。文字は、真っ白にせず、抑える */
+  --sb-accent:#b5483d; --sb-break:#a98a3d; --sb-track:#1a1a1a; --sb-line:#333;
+  --sb-ring-w:4;                                              /* 線を細くして、明るい面を減らす */
+  color-scheme:dark;
+}
+
+/* 表示全体(有機ELでは、これを動かす。動く範囲は、中心から ±3vmin。外側の余白 6vmin の内側に収まる) */
+.sb-stage{
+  box-sizing:border-box; width:100%; flex:1 1 auto; min-height:0;
+  padding:6vmin; display:grid; gap:4vmin; align-content:center; justify-items:center; text-align:center;
+  grid-template-areas:"clock" "sw" "pomo";
+}
+.standby[data-mode="oled"] .sb-stage{
+  transform:translate(calc(var(--sb-dx, 0) * 1vmin), calc(var(--sb-dy, 0) * 1vmin));
+  transition:transform 40s linear;                            /* 40 秒かけて、次の位置へ(一定の速さ。止まって見えるほど、ゆっくり) */
+  will-change:transform;
+}
+@media (prefers-reduced-motion:reduce){
+  .standby[data-mode="oled"] .sb-stage{transition:none;}      /* 動きを減らす設定: 滑らかな移動をやめ、40 秒ごとに、位置だけを変える(焼き付き防止は、続ける) */
+}
+@media (orientation:landscape) and (min-aspect-ratio:5/4){     /* 横長: 左にストップウォッチ、右にポモドーロ */
+  .sb-stage{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr); grid-template-areas:"clock clock" "sw pomo"; column-gap:6vmin;}
+}
+
+.sb-clock{grid-area:clock; font-size:clamp(14px, 3.4vmin, 30px); color:var(--sb-sub); letter-spacing:.08em;}
+
+.sb-sw{grid-area:sw; min-width:0; display:flex; flex-direction:column; align-items:center; gap:1.4vmin;}
+.sb-state{display:flex; align-items:center; gap:.6em; font-size:clamp(14px, 3.2vmin, 28px); color:var(--sb-sub);}
+.sb-dot{width:.7em; height:.7em; border-radius:50%; border:2px solid var(--sb-sub); box-sizing:border-box; flex:none;}
+.sb-dot.live{background:var(--sb-accent); border-color:var(--sb-accent);}
+.sb-time{
+  font-size:clamp(40px, min(17vmin, 15vw), 260px); line-height:1.05; font-weight:700; letter-spacing:.02em;
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.sb-start{min-height:1.4em; font-size:clamp(13px, 3vmin, 26px); color:var(--sb-sub);}
+
+.sb-pomo{grid-area:pomo; min-width:0; display:flex; flex-direction:column; align-items:center; gap:1.2vmin; transition:opacity .4s ease;}
+.sb-pomo[data-running="false"]{opacity:.6;}                    /* 止まっているときは、少し抑える */
+.sb-ring{position:relative; width:clamp(120px, min(34vmin, 40vw), 360px); aspect-ratio:1;}
+.sb-ring svg{display:block; width:100%; height:100%;}
+.sb-ring-track{stroke:var(--sb-track); stroke-width:var(--sb-ring-w);}
+.sb-ring-bar{stroke:var(--sb-accent); stroke-width:var(--sb-ring-w);}
+.sb-pomo[data-phase="break"] .sb-ring-bar{stroke:var(--sb-break);}
+.sb-remain{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:clamp(24px, 7.4vmin, 76px); font-weight:700; font-variant-numeric:tabular-nums;}
+.sb-phase{font-size:clamp(14px, 3.4vmin, 30px);}
+.sb-cycle{font-size:clamp(12px, 2.6vmin, 22px); color:var(--sb-sub);}
+.sb-dots{display:flex; gap:.9em; min-height:1em;}
+.sb-cdot{width:1.1vmin; height:1.1vmin; min-width:8px; min-height:8px; border-radius:50%; border:1.5px solid var(--sb-sub); box-sizing:border-box;}
+.sb-cdot.done{background:var(--sb-sub);}
+.sb-cdot.cur{border-color:var(--sb-accent); background:var(--sb-accent);}
+
+/* 操作(表示の切り替え・閉じる)。4 秒操作がないと消える。置き場所は動かない(表示全体と別) */
+.sb-controls{
+  position:absolute; left:0; right:0; bottom:max(3vmin, env(safe-area-inset-bottom, 0px));
+  display:flex; justify-content:center; align-items:center; gap:14px; flex-wrap:wrap; padding:0 12px;
+  transition:opacity .5s ease;
+}
+.standby.sb-idle .sb-controls{opacity:0; pointer-events:none;}
+.standby.sb-idle{cursor:none;}
+.sb-seg{display:flex;}
+.sb-btn{
+  font:inherit; font-size:13px; line-height:1.2; padding:10px 18px; min-height:40px; cursor:pointer;
+  background:transparent; color:var(--sb-sub); border:1px solid var(--sb-line);
+}
+.sb-btn:hover{color:var(--sb-ink); border-color:var(--sb-sub);}
+.sb-btn:focus-visible{outline:2px solid var(--sb-ink); outline-offset:2px;}
+.sb-seg .sb-btn + .sb-btn{margin-left:-1px;}
+.sb-btn[aria-pressed="true"]{color:var(--sb-ink); border-color:var(--sb-ink); font-weight:700; position:relative; z-index:1;}   /* 選択中は、太字と枠で示す(面を塗らない) */

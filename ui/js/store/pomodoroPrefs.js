@@ -9,7 +9,10 @@ export const prefs = {
   volume: 60,             // 音量 0〜100
   desktopNotify: true,    // デスクトップ通知(アプリが前面にないときだけ)
   idleInhibit: false,     // 計測中は、画面の消灯・スリープを防ぐ
+  standbyMode: "normal",  // 待機画面の表示: "normal"(テーマ色) / "oled"(有機EL向け。背景は黒で、少し動く)
 };
+
+export const STANDBY_MODE_KEYS = ["normal", "oled"];
 
 let loading = null;
 
@@ -20,13 +23,14 @@ export function loadPrefs(api) {
         const s = await api.get_settings();
         const p = s && s.pomodoro;
         if (!p) return;
-        const { pause_sw_on_break, sound, volume, desktop_notify, idle_inhibit, ...cfg } = p;
+        const { pause_sw_on_break, sound, volume, desktop_notify, idle_inhibit, standby_mode, ...cfg } = p;
         stopwatch.configurePomodoro(cfg);
         if (pause_sw_on_break != null) stopwatch.pomodoro.pauseSwOnBreak = pause_sw_on_break;
         if (sound != null) prefs.sound = !!sound;
         if (volume != null) prefs.volume = Math.min(100, Math.max(0, Number(volume) || 0));
         if (desktop_notify != null) prefs.desktopNotify = !!desktop_notify;
         if (idle_inhibit != null) prefs.idleInhibit = !!idle_inhibit;
+        if (STANDBY_MODE_KEYS.includes(standby_mode)) prefs.standbyMode = standby_mode;   // 知らない値は、既定(テーマ色)のまま
       } catch (e) { console.error(e); }
     })();
   }
@@ -41,5 +45,6 @@ export function savePrefs(api) {
     volume: prefs.volume,
     desktop_notify: prefs.desktopNotify,
     idle_inhibit: prefs.idleInhibit,
+    standby_mode: prefs.standbyMode,
   });
 }

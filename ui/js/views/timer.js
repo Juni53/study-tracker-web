@@ -1,7 +1,7 @@
 // Study Tracker v3 - ストップウォッチ/ポモドーロタブ
 import { todayDateHtml } from "../components/todayDate.js";
 import { stopwatch, subscribe } from "../store/stopwatch.js";
-import { deriveCrossing, subscribeCrossing } from "../store/dayCrossing.js";
+import { subscribeCrossing } from "../store/dayCrossing.js";
 import { openSaveForm } from "../components/saveForm.js";
 import { mountPoints } from "../components/points.js";
 import { showAlert, showConfirm } from "../components/dialog.js";
@@ -11,8 +11,8 @@ import { bindDisclosure } from "../components/disclosure.js";
 import { playChime } from "../components/chime.js";
 import { prefs, loadPrefs, savePrefs } from "../store/pomodoroPrefs.js";
 import { refreshInhibit, refreshNotifyPermission } from "../store/pomodoroAlerts.js";
-
-const p2 = (n) => String(n).padStart(2, "0");
+import { hms, mmss, PHASE_LABEL, startLabel, swStatusLabel, ringOffset } from "../components/timeFormat.js";
+import { openStandby } from "../components/standby.js";
 
 // ポモドーロのリング(ドーナツゲージ): 値が変わるたびに滑らかに動かす。
 //  - 毎秒の小さな進みは、1秒かけて一定の速さで(止まらずに進み続けて見える)
@@ -36,9 +36,6 @@ function setRingOffset(ring, offset) {
   }
   ring._offset = offset;
 }
-const hms = (s) => `${p2(Math.floor(s / 3600))}:${p2(Math.floor(s / 60) % 60)}:${p2(s % 60)}`;
-const mmss = (s) => `${p2(Math.floor(s / 60))}:${p2(s % 60)}`;
-const PHASE_LABEL = { work: "作業中", short_break: "短休憩", long_break: "長休憩" };
 
 // 日付が変わっても、このタブは描き直さない(計測・ポモドーロに干渉しないため)。app.js の refreshActiveView が見る。
 // このタブの「今日」に依存する表示は、見出しの日付(components/todayDate.js が文字だけ入れ替える)と、ポイント残高(points.js)だけ。
@@ -52,12 +49,8 @@ export function onLeave() {
   if (unsubscribeCrossing) { unsubscribeCrossing(); unsubscribeCrossing = null; }
 }
 
-// 計測を始めた時刻の表示。同じ日は「開始 23:05」、日をまたいでいる間は「11/12 23:05 開始」。
-// 一時停止しても、開始時刻は最初のまま。リセット・保存で消える(計測が無い = 開始日が null)。
-export function startLabel(sw = stopwatch, crossing = deriveCrossing(sw)) {
-  if (sw.startDate === null || !sw.startTime) return "";
-  return crossing ? `${sw.startDate.slice(5, 7)}/${sw.startDate.slice(8, 10)} ${sw.startTime} 開始` : `開始 ${sw.startTime}`;
-}
+// 計測を始めた時刻の表示(components/timeFormat.js。待機画面と共通)。ここからも使えるようにしてある
+export { startLabel };
 
 export async function render(root, api) {
   await loadPrefs(api); // 設定の読み込みは、アプリ起動時に始まっている(ここでは終わりを待つだけ)
@@ -75,6 +68,7 @@ export async function render(root, api) {
         <button class="btn muted" id="swResetBtn">リセット</button>
         <button class="btn" id="swSaveBtn">保存</button>
       </div>
+      <div class="sw-sub-row"><button class="btn muted small" id="standbyBtn" aria-haspopup="dialog">⛶ 待機画面(全画面)</button></div>
     </div>
 
     <div class="sect">
@@ -134,6 +128,9 @@ export async function render(root, api) {
   // 概要のポイント残高
   const home = await api.get_home_data();
   mountPoints(root.querySelector("#ptsTop"), home.points_balance);
+
+  // ── 待機画面(全画面。ストップウォッチ・ポモドーロの表示専用。components/standby.js) ──
+  root.querySelector("#standbyBtn").addEventListener("click", (e) => openStandby(api, { opener: e.currentTarget }));
 
   // ── 設定(作業/短休憩/長休憩/サイクル) ──
   const persistPomodoroSettings = () => savePrefs(api);
@@ -251,11 +248,7 @@ export async function render(root, api) {
     root.querySelector("#swDot").className = "dot" + (stopwatch.running ? " live" : "");
     const autoPaused = stopwatch._autoPausedForBreak;
     const mo = { animate: !firstPaint }; // タブを開いた最初の描画では動かさない(開いた状態からクロスフェードが始まらないように)
-    morphText(root.querySelector("#swStatus"), autoPaused
-      ? `休憩中のため自動停止${stopwatch.pomodoro.running ? "" : "・休憩も一時停止中"}`
-      : stopwatch.running
-      ? `計測中${stopwatch.pomodoro.linked && stopwatch.pomodoro.running ? "・ポモドーロ連動" : ""}`
-      : (stopwatch.currentSeconds() > 0 ? "一時停止中" : "停止中"), mo);
+    morphText(root.querySelector("#swStatus"), swStatusLabel(), mo);
     morphText(root.querySelector("#swStart"), startLabel(), { animate: !firstPaint, width: false });
     const toggleBtn = root.querySelector("#swToggleBtn");
     morphText(toggleBtn, autoPaused
@@ -276,10 +269,8 @@ export async function render(root, api) {
 
     // ポモドーロ表示(休憩中はリングを金色に)
     const isBreak = stopwatch.pomodoro.phase !== "work";
-    const total = stopwatch.pomodoro.config[stopwatch.pomodoro.phase] * 60;
     const remain = stopwatch.pomodoroRemaining();
-    const circumference = 377; // 2πr, r=60
-    const offset = total > 0 ? circumference * (1 - remain / total) : 0;
+    const offset = ringOffset(stopwatch.pomodoro, remain);
     const ring = root.querySelector("#ringCircle");
     setRingOffset(ring, offset);
     ring.style.stroke = isBreak ? "var(--gold)" : "var(--stamp)";

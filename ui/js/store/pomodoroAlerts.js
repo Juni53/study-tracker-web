@@ -23,6 +23,11 @@ export const refreshNotifyPermission = () => askNow();
 // 設定でアイドル阻害を切り替えたときに、すぐ反映する
 export const refreshInhibit = () => syncNow();
 
+// 待機画面(components/standby.js)を開いている間は、設定に関わらず、画面の消灯・スリープを防ぐ(待機画面は、つけっぱなしで使うため)。
+// 閉じたら、元の設定(計測中だけ防ぐ)に戻る。
+let standbyHold = false;
+export function setStandbyHold(on) { standbyHold = !!on; syncNow(); }
+
 export function startAlerts(api) {
   onPhaseChange(({ from, to }) => {
     if (prefs.sound) {
@@ -35,10 +40,10 @@ export function startAlerts(api) {
     }
   });
 
-  // アイドル阻害: 設定がONで、ストップウォッチかポモドーロが動いているあいだだけ。状態が変わったときだけ API へ伝える
+  // アイドル阻害: 設定がONで、ストップウォッチかポモドーロが動いているあいだだけ(と、待機画面を開いている間)。状態が変わったときだけ API へ伝える
   let inhibiting = false;
   const syncInhibit = () => {
-    const want = prefs.idleInhibit && (stopwatch.running || stopwatch.pomodoro.running);
+    const want = standbyHold || (prefs.idleInhibit && (stopwatch.running || stopwatch.pomodoro.running));
     if (want === inhibiting) return;
     inhibiting = want;
     api.set_idle_inhibit(want).catch(() => {});

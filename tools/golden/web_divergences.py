@@ -21,6 +21,23 @@ DIVERGENCES = [
         r"[ \t]*if iso in launch_log:\n[ \t]*break[^\n]*\n",
         "",
     ),
+    # さぼりペナルティ(ポイントの消失)の 1 日ぶんの金額は、四捨五入した「整数」にする(Python 版は、小数第 2 位まで)。
+    # 四捨五入 = ちょうど半分は切り上げ(2.5 → 3。Python の round は偶数丸めで 2.5 → 2 になるので、使わない)。
+    # 計算の途中のごく小さな誤差(25.499999999999996 など)で、半分の判定が狂わないよう、小数第 9 位で丸めてから判定する(JS 版の roundHalfUp と同じ)。
+    # なお、Python 版は「ペナルティが 0 より大きいとき」だけ引くので、金額が 0 に丸まる残高(rate が 2% なら 25 ポイント未満)は、減らない。
+    # ペナルティが入る場所は 2 つ(毎日の判定と、過去の日付の記録を足したとき)。メッセージの行で、それぞれを特定する。
+    (
+        "さぼりペナルティ: 金額は四捨五入した整数(毎日の判定)",
+        "data_manager.py",
+        r'decay = round\(self\.points\["balance"\] \* rate, 2\)(\n[ \t]*if decay > 0:\n[ \t]*self\._add_points\(-decay, f"⚠️ サボりペナルティ \(-)',
+        r'decay = int(round(self.points["balance"] * rate, 9) + 0.5)\g<1>',
+    ),
+    (
+        "さぼりペナルティ: 金額は四捨五入した整数(過去の日付の記録を足したとき)",
+        "data_manager.py",
+        r'decay = round\(self\.points\["balance"\] \* rate, 2\)(\n[ \t]*if decay > 0:\n[ \t]*self\._add_points\(-decay, f"⚠️ サボりペナルティ\(過去記録分\))',
+        r'decay = int(round(self.points["balance"] * rate, 9) + 0.5)\g<1>',
+    ),
 ]
 
 

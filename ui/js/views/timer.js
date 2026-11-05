@@ -1,5 +1,7 @@
 // Study Tracker v3 - ストップウォッチ/ポモドーロタブ
+import { todayDateHtml } from "../components/todayDate.js";
 import { stopwatch, subscribe } from "../store/stopwatch.js";
+import { deriveCrossing, subscribeCrossing } from "../store/dayCrossing.js";
 import { openSaveForm } from "../components/saveForm.js";
 import { mountPoints } from "../components/points.js";
 import { showAlert, showConfirm } from "../components/dialog.js";
@@ -38,22 +40,36 @@ const hms = (s) => `${p2(Math.floor(s / 3600))}:${p2(Math.floor(s / 60) % 60)}:$
 const mmss = (s) => `${p2(Math.floor(s / 60))}:${p2(s % 60)}`;
 const PHASE_LABEL = { work: "作業中", short_break: "短休憩", long_break: "長休憩" };
 
+// 日付が変わっても、このタブは描き直さない(計測・ポモドーロに干渉しないため)。app.js の refreshActiveView が見る。
+// このタブの「今日」に依存する表示は、見出しの日付(components/todayDate.js が文字だけ入れ替える)と、ポイント残高(points.js)だけ。
+export const refreshOnDayChange = false;
+
 let unsubscribe = null;
+let unsubscribeCrossing = null;
 
 export function onLeave() {
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  if (unsubscribeCrossing) { unsubscribeCrossing(); unsubscribeCrossing = null; }
+}
+
+// 計測を始めた時刻の表示。同じ日は「開始 23:05」、日をまたいでいる間は「11/12 23:05 開始」。
+// 一時停止しても、開始時刻は最初のまま。リセット・保存で消える(計測が無い = 開始日が null)。
+export function startLabel(sw = stopwatch, crossing = deriveCrossing(sw)) {
+  if (sw.startDate === null || !sw.startTime) return "";
+  return crossing ? `${sw.startDate.slice(5, 7)}/${sw.startDate.slice(8, 10)} ${sw.startTime} 開始` : `開始 ${sw.startTime}`;
 }
 
 export async function render(root, api) {
   await loadPrefs(api); // 設定の読み込みは、アプリ起動時に始まっている(ここでは終わりを待つだけ)
 
   root.innerHTML = `
-    <div class="top"><h1>ストップウォッチ</h1><div class="right"><span class="pts mono" id="ptsTop">…</span></div></div>
+    <div class="top"><h1>ストップウォッチ</h1><div class="right">${todayDateHtml()}<span class="pts mono" id="ptsTop">…</span></div></div>
 
     <div class="sect">
       <div class="sect-lbl">ストップウォッチ</div>
       <div class="sw-time mono" id="swTime">00:00:00</div>
       <div class="sw-status-row"><span class="dot" id="swDot"></span><span class="lbl3 xf-host xf-inline" id="swStatus"><span class="xf">停止中</span></span></div>
+      <div class="sw-start-row"><span class="sw-start mono xf-host xf-inline" id="swStart"><span class="xf"></span></span></div>
       <div class="sw-btn-row">
         <button class="btn xf-host" id="swToggleBtn"><span class="xf">開始</span></button>
         <button class="btn muted" id="swResetBtn">リセット</button>
@@ -225,6 +241,9 @@ export async function render(root, api) {
   firstPaint = false;
   if (unsubscribe) unsubscribe();
   unsubscribe = subscribe(() => { paint(); paintPomoButtons(); });
+  // 日付が変わったとき(計測が止まっていても、ストップウォッチの購読は呼ばれない)にも、開始時刻の表記を新しくする
+  if (unsubscribeCrossing) unsubscribeCrossing();
+  unsubscribeCrossing = subscribeCrossing(() => paint());
 
   function paint() {
     // ストップウォッチ
@@ -237,6 +256,7 @@ export async function render(root, api) {
       : stopwatch.running
       ? `計測中${stopwatch.pomodoro.linked && stopwatch.pomodoro.running ? "・ポモドーロ連動" : ""}`
       : (stopwatch.currentSeconds() > 0 ? "一時停止中" : "停止中"), mo);
+    morphText(root.querySelector("#swStart"), startLabel(), { animate: !firstPaint, width: false });
     const toggleBtn = root.querySelector("#swToggleBtn");
     morphText(toggleBtn, autoPaused
       ? (stopwatch.pomodoro.running ? "休憩を一時停止" : "休憩を再開")

@@ -1,4 +1,6 @@
 // Study Tracker v3 - ホームタブ
+import { pendingDates, pendClass, pendTitle, pendSr } from "../components/pending.js";
+import { todayDateHtml } from "../components/todayDate.js";
 import { renderSmoothChart } from "../components/chart.js";
 import { navigate } from "../app.js";
 import { mountPoints } from "../components/points.js";
@@ -28,7 +30,7 @@ function fmtHM(min) {
 }
 
 export async function render(root, api) {
-  root.innerHTML = `<div class="top"><h1>ホーム</h1><div class="right"><span class="mono" id="todayDate"></span><span class="pts mono">…</span></div></div>`;
+  root.innerHTML = `<div class="top"><h1>ホーム</h1><div class="right">${todayDateHtml()}<span class="pts mono">…</span></div></div>`;
   let data = null;
   try {
     data = await api.get_home_data();
@@ -43,10 +45,8 @@ export async function render(root, api) {
 }
 
 function paint(root, d) {
-  const today = new Date();
-  const wd = "日月火水木金土"[today.getDay()];
-  root.querySelector("#todayDate").textContent =
-    `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")} (${wd})`;
+  const pend = pendingDates();          // 計測が日付をまたいでいる間の、開始日(確定前)。またいでいなければ空
+  const crossing = pend.length > 0;
   mountPoints(root.querySelector(".pts"), d.points_balance);
 
   const nextBonus = d.next_bonus_days != null ? `次のボーナス ${d.next_bonus_days}日` : "";
@@ -56,10 +56,11 @@ function paint(root, d) {
     "beforeend",
     `
     <div class="grid-top">
-      <div class="streak-box">
+      <div class="streak-box${pendClass(crossing)}"${pendTitle(crossing)}>
         <div class="lbl2">連続記録</div>
         <div class="num mono">${String(d.streak).padStart(2, "0")}<span> 日</span></div>
         <div class="status ${d.streak_state}"><span class="dot ${d.streak_state === "active" ? "live" : ""}"></span><span class="st-text"><span class="st-a">${streakStatusLabel}</span>${nextBonus ? `<span class="st-sep"> ・ </span><span class="st-b">${nextBonus}</span>` : ""}</span></div>
+        ${pendSr(crossing)}
       </div>
       <div class="home-meters">
         ${goalMeterRowHtml("今日", d.today_min, d.daily_goal_min)}
@@ -77,7 +78,7 @@ function paint(root, d) {
 
     <div class="log">
       <div class="lg-head"><div>日付</div><div>時間配分</div><div style="text-align:right;padding-right:8px;">時間</div><div class="tg-head" style="padding-left:10px;">タグ</div></div>
-      ${weekRowsHtml(d.week, d.tags)}
+      ${weekRowsHtml(d.week, d.tags, pend)}
     </div>
 
     <div class="split">
@@ -100,7 +101,8 @@ function paint(root, d) {
   const chartEl = root.querySelector("#weekChart");
   const todayIndex = d.week.findIndex((w) => w.is_today);
   const weekValues = d.week.map((w) => w.minutes);
-  const opts = { todayIndex: todayIndex >= 0 ? todayIndex : d.week.length - 1 };
+  const pendingIndex = d.week.findIndex((w) => pend.includes(w.date));   // 週の中に、確定前の日があれば、その点(無ければ -1 → null)
+  const opts = { todayIndex: todayIndex >= 0 ? todayIndex : d.week.length - 1, pendingIndex: pendingIndex >= 0 ? pendingIndex : null };
   renderSmoothChart(chartEl, weekValues, opts);
 
   // コンテナの幅が変わるたび(サイドバー折りたたみ・ウィンドウのリサイズ)に描き直し、
@@ -183,17 +185,18 @@ function examCardHtml(exam) {
     </div>`;
 }
 
-function weekRowsHtml(week, tags) {
+function weekRowsHtml(week, tags, pend = []) {
   const max = Math.max(...week.map((w) => w.minutes), 1);
   return week
     .map((w) => {
       const [, mm, dd] = w.date.split("-");
       const pctW = (w.minutes / (max * 1.15)) * 100;
+      const on = pend.includes(w.date);   // 確定前の日: 日付の行全体(日付・棒・時間・タグ)に、斜線
       const tagDots = w.tag_ids.map((id) => `<i style="background:${TAG_COLOR(id, tags)}"></i>`).join("");
-      return `<div class="lg-row${w.is_today ? " today" : ""}">
+      return `<div class="lg-row${w.is_today ? " today" : ""}${pendClass(on)}"${pendTitle(on)}>
         <div class="d mono"><b>${mm}/${dd}</b><span>${w.weekday}</span></div>
         <div><div class="bt"><div class="bf" style="width:${w.minutes ? pctW : 0}%"></div></div></div>
-        <div class="m mono">${w.minutes ? fmtHM(w.minutes) : "―"}</div>
+        <div class="m mono">${w.minutes ? fmtHM(w.minutes) : "―"}${pendSr(on)}</div>
         <div class="tg">${tagDots}</div>
       </div>`;
     })

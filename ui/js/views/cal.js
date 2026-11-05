@@ -2,6 +2,8 @@
 // app.js の NAV キーが "cal" なので、ルーターは ./views/cal.js を読み込む(calendar.js ではない)。
 // 集計・判定は Python 側(data_manager.calendar_month)で済ませてあり、ここでは並べて描くだけ。
 
+import { pendingDates, isCrossing, pendSr, PEND_LABEL } from "../components/pending.js";
+import { todayDateHtml } from "../components/todayDate.js";
 import { isTouchInput } from "../components/inputMode.js";
 import { mountPoints } from "../components/points.js";
 import { slideIn, slideOut, finished } from "../components/motion.js";
@@ -93,7 +95,7 @@ export async function render(root, api) {
   const alive = () => token === viewToken;
 
   root.innerHTML = `
-    <div class="top"><h1>カレンダー</h1><div class="right"><span class="pts mono" id="calPts">…</span></div></div>
+    <div class="top"><h1>カレンダー</h1><div class="right">${todayDateHtml()}<span class="pts mono" id="calPts">…</span></div></div>
 
     <div class="cal-header">
       <div class="cal-nav">
@@ -204,11 +206,16 @@ export async function render(root, api) {
       const more = s.past.length > 3 ? ` ほか${s.past.length - 3}件` : "";
       html += `<span class="cal-streak-past">過去の連続記録: ${items}${more}</span>`;
     }
-    $("#calStreak").innerHTML = html;
+    const el = $("#calStreak");
+    const crossing = isCrossing();          // 計測が日付をまたいでいる間は、連続記録の行に斜線
+    el.innerHTML = html + pendSr(crossing);
+    el.classList.toggle("pend", crossing);
+    if (crossing) { el.title = PEND_LABEL; el.dataset.pending = "true"; } else { el.removeAttribute("title"); delete el.dataset.pending; }
   }
 
   function paintGrid(d) {
     const todayStr = todayIso();
+    const pend = pendingDates();          // 確定前の日(計測が日付をまたいでいる間の、開始日)のマスに、斜線
     const t0 = toUtc(d.grid_start);
     const n = Math.round((toUtc(d.grid_end) - t0) / 86400000) + 1;
     const ym = `${d.year}-${pad2(d.month)}`;
@@ -222,6 +229,7 @@ export async function render(root, api) {
       const cls = ["cal-cell", `cal-lv${levelOf(min)}`];
       if (!inMonth) cls.push("outside");
       if (inMonth && iso === todayStr) cls.push("today");
+      if (pend.includes(iso)) cls.push("pend");
       if (day.in_streak) cls.push("streak");
       else if (day.in_past_streak) cls.push("streak-past");
 
@@ -231,7 +239,7 @@ export async function render(root, api) {
       if (day.milestones && day.milestones.length) marks.push('<span class="cal-mk-mile"></span>');
 
       const attrs = inMonth ? ` data-date="${iso}" tabindex="0"` : "";
-      const label = inMonth ? ` aria-label="${parseInt(iso.slice(5, 7), 10)}月${parseInt(iso.slice(8), 10)}日${min ? ` ${fmtHM(min)}` : ""}"` : "";
+      const label = inMonth ? ` aria-label="${parseInt(iso.slice(5, 7), 10)}月${parseInt(iso.slice(8), 10)}日${min ? ` ${fmtHM(min)}` : ""}${pend.includes(iso) ? ` ・ ${PEND_LABEL}` : ""}"` : "";
       html += `<div class="${cls.join(" ")}"${attrs}${label}><span class="cal-dn mono">${parseInt(iso.slice(8), 10)}</span>${marks.join("")}</div>`;
     }
     $("#calGrid").innerHTML = html;

@@ -112,9 +112,10 @@
 #content{max-width:820px; margin:0 auto; padding:18px 20px 60px; container-type:inline-size;}
 
 /* タブ共通の見出し行 */
-.top{display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px solid var(--ink);}
+/* 見出し行: 右側に、日付(components/todayDate.js)とポイントが並ぶ。狭い画面(スマホなど)で入りきらないときは、右側が次の行へ回る */
+.top{display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px solid var(--ink);}
 .top h1{font-size:16px; font-weight:700; margin:0; letter-spacing:.02em;}
-.top .right{display:flex; gap:16px; font-size:13px; color:var(--ink-sub); align-items:center;}
+.top .right{display:flex; gap:16px; font-size:13px; color:var(--ink-sub); align-items:center; margin-left:auto;}
 .top .pts{color:var(--gold); font-weight:700;}
 
 /* ポイントの増減の演出(components/points.js)。

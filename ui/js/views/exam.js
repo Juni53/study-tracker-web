@@ -1,11 +1,13 @@
 // Study Tracker v3 - 試験管理タブ
 
+import { todayDateHtml } from "../components/todayDate.js";
 import { mountPoints } from "../components/points.js";
 import { attachDateSteppers } from "../components/dateStepper.js";
 import { growIn, shrinkOut, finished } from "../components/motion.js";
 import { showConfirm } from "../components/dialog.js";
 import { createFormError } from "../components/formError.js";
 import { validateExamForm } from "../components/validate.js";
+import { clock, todayIso } from "../core/dates.js";   // 「今日」は、共通の時計から(new Date() を直接使わない。テストで日付を固定できる)
 
 // 初回の案内(components/onboarding.js)などから、「試験を追加」のポップアップを、名前と日付を入れた状態で開くための入口。
 // 試験管理タブが表示されているときだけ使える(app.js の openExamAddFromGuide が、タブを開いてから呼ぶ)。
@@ -14,10 +16,6 @@ let current = null;
 export function openAddExam(prefill = {}) { return current ? current.openAdd(prefill) : null; }
 export function onLeave() { current = null; }
 
-function todayIso() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 function daysBetween(aIso, bIso) {
   const a = new Date(aIso + "T00:00:00"), b = new Date(bIso + "T00:00:00");
   return Math.round((b - a) / 86400000);
@@ -39,7 +37,7 @@ function esc(s) {
 
 export async function render(root, api) {
   root.innerHTML = `
-    <div class="top"><h1>試験管理</h1><div class="right"><span class="pts mono" id="ptsTop">…</span></div></div>
+    <div class="top"><h1>試験管理</h1><div class="right">${todayDateHtml()}<span class="pts mono" id="ptsTop">…</span></div></div>
     <button class="add-btn" id="examAddBtn">＋ 試験を追加</button>
     <div class="sect-lbl" style="margin:20px 4px 10px;">今後の試験</div>
     <div id="upcomingList"></div>
@@ -100,7 +98,7 @@ export async function render(root, api) {
 
   function paint() {
     const today = todayIso();
-    const todayY = new Date().getFullYear();
+    const todayY = clock.now().getFullYear();
     const upcoming = exams.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
     const past = exams.filter((e) => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
 
@@ -207,7 +205,7 @@ export async function render(root, api) {
     root.querySelector("#examModalTitle").textContent = "試験を追加";
     root.querySelector("#examName").value = prefill.name ?? "";
     const m = typeof prefill.date === "string" ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(prefill.date) : null;
-    const t = new Date();
+    const t = clock.now();
     root.querySelector("#examY").value = m ? m[1] : t.getFullYear();
     root.querySelector("#examM").value = m ? m[2] : String(t.getMonth() + 1).padStart(2, "0");
     root.querySelector("#examD").value = m ? m[3] : String(t.getDate()).padStart(2, "0");

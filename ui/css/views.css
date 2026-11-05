@@ -211,6 +211,8 @@
 .sw-status-row{display:flex; align-items:center; gap:7px; justify-content:center; margin-bottom:6px;}
 .sw-status-row .lbl3{font-size:12px; color:var(--stamp);}
 /* ボタン同士の間隔は gap ではなく margin-left で持つ(横に伸びて現れる/消えるボタンが、隙間だけ残さないように。revealX が margin も 0 から動かす) */
+/* 計測を始めた時刻(「開始 23:05」/ 日をまたいでいる間は「11/12 23:05 開始」)。無いときも高さは保つ(ボタンが動かないように) */
+.sw-start-row{text-align:center; min-height:1.7em; margin:-2px 0 4px; font-size:12px; color:var(--ink-sub);}
 .sw-btn-row{display:flex; justify-content:center; margin-top:16px;}
 .sw-btn-row > * + *{margin-left:8px;}
 /* 横に伸び縮みして現れる/消えるボタンの文字が、幅が狭くなる途中で折り返して縦に伸びないように(revealX) */

@@ -11,6 +11,10 @@ import { initInputMode } from "./components/inputMode.js";
 import { initInstall } from "./components/install.js";
 import { buildNavItems } from "./core/nav.js";
 import { todayIso } from "./core/dates.js";
+import { updateTodayDates } from "./components/todayDate.js";
+import { setBalance } from "./components/points.js";
+import { getCrossing, refreshCrossing, subscribeCrossing } from "./store/dayCrossing.js";
+import { startCrossingNotice } from "./components/crossingNotice.js";
 import { startDayWatcher } from "./components/dayWatcher.js";
 import { installLeaveGuard } from "./components/leaveGuard.js";
 import { feedbackLink } from "./core/feedback.js";
@@ -117,6 +121,9 @@ export async function navigate(key) {
   setActiveNav(key);
 
   contentEl.style.pointerEvents = "none"; // 消えていく画面や描画中の画面を、うっかり押さないようにする
+  // タブを開くたびに、日付が変わっていないか確認する(変わっていれば、起動時処理のやり直しが済んでから、新しいタブを描く)。
+  // いまは画面が使えない状態(上の pointerEvents)なので、ここでは画面の描き直しは起きない。
+  if (dayWatcher) await dayWatcher.check();
   await fadeOutContent();
   if (seq !== navSeq) return;
 
@@ -145,12 +152,52 @@ export async function navigate(key) {
   }
 }
 
-// 開いているタブを、同じタブのまま描き直す(日付が変わったとき、「今日」の表示を新しくする)。切り替え中なら、何もしない。
+// 開いているタブを、同じタブのまま描き直す(日付が変わったとき、「今日」の表示を新しくする)。
+//  - 日付による自動更新のための経路。タブの切り替えのアニメーション(消える → 上から順に現れる)は使わない。
+//  - 古い画面と新しい画面を、クロスフェードで入れ替える(View Transitions。document.startViewTransition の既定の動き)。
+//    対応していないブラウザ、または「動きを減らす」設定のときは、アニメーションなしで、すぐに入れ替える。
+//  - 見ている位置(スクロール)は、そのまま保つ。
+//  - 描き直さない画面(views の refreshOnDayChange が false。ストップウォッチ・フィードバック)と、切り替え中は、何もしない(false を返す)。
 export async function refreshActiveView() {
   const key = activeKey;
   if (!key || contentEl.style.pointerEvents === "none") return false;
-  activeKey = null; // navigate の「同じタブなら何もしない」を外す
-  await navigate(key);
+  const mod = await loadView(key);
+  if (!mod || typeof mod.render !== "function" || mod.refreshOnDayChange === false) return false;
+  if (key !== activeKey || contentEl.style.pointerEvents === "none") return false; // 読み込みのあいだに、切り替えが始まった
+
+  const seq = ++navSeq;                    // これから描き直すあいだに別のタブが押されたら、そちらを優先する
+  contentEl.style.pointerEvents = "none";
+  const scroller = document.scrollingElement;
+  const scrollTop = scroller ? scroller.scrollTop : 0;
+  let painted = false;
+  const paint = async () => {
+    painted = true;
+    if (currentView && currentView.onLeave) currentView.onLeave();
+    currentView = mod;
+    contentEl.style.visibility = "hidden"; // 描画が終わるまで見せない(レイアウトは計算されるので、グラフの幅などは取れる)
+    try {
+      await mod.render(contentEl, api);
+    } finally {
+      contentEl.style.visibility = "";
+    }
+    if (seq === navSeq && scroller) scroller.scrollTop = scrollTop;
+  };
+  try {
+    if (!reduceMotion() && typeof document.startViewTransition === "function") {
+      try {
+        const vt = document.startViewTransition(paint);
+        vt.finished.catch(() => {});       // 中断されても、未処理の失敗にしない
+        await vt.updateCallbackDone;       // 描き直しが終わるまで(クロスフェードが終わるのは、待たない)
+      } catch (e) {
+        if (painted) throw e;              // 描き直しそのものの失敗
+        await paint();                     // クロスフェードを始められなかった。そのまま描き直す
+      }
+    } else {
+      await paint();
+    }
+  } finally {
+    if (seq === navSeq) contentEl.style.pointerEvents = "";
+  }
   return true;
 }
 
@@ -283,13 +330,25 @@ loadPrefs(api).then(refreshInhibit);
 // ストップウォッチ(ポモドーロ)の計測の途中で、再読み込み・閉じる・離れる、をしようとしたら、ブラウザの確認を出す(計測は、メモリの中だけにあるため)
 installLeaveGuard({ isActive: hasActiveSession });
 
-// 日付が変わったら、起動時処理(さぼり券の自動適用・ポイントの消失の判定)をやり直して、画面を更新する(ストップウォッチが動いている間は保留して、お知らせを出す)。
-// 起動時処理のやり直しのあとで、バックアップのリマインダーも、もう一度判定する。
+// 日付が変わったら、見出しの日付をすぐに入れ替え(文字だけ。クロスフェード)、起動時処理(さぼり券の自動適用・ポイントの消失の判定)をやり直して、
+// 画面を更新する(クロスフェード)。ストップウォッチが動いていても、待たない(理由は components/dayWatcher.js の注釈)。
+// 起動時処理のやり直しのあとで、ポイント残高を新しくし(描き直さない画面にも反映)、バックアップのリマインダーも、もう一度判定する。
 dayWatcher = startDayWatcher({
-  api, today: todayIso, isBusy: hasActiveSession, subscribeBusy: subscribe,
+  api, today: todayIso,
   isIdle: viewIsIdle, refresh: refreshActiveView,
-  onRolled: () => showBackupBannerIfDue(api),
+  onDayChanged: (day) => { updateTodayDates(day); refreshCrossing(day); },   // 日付の文字を入れ替え、「日付をまたいでいる計測」かの判定もやり直す
+  onRolled: (r) => {
+    if (r && r.points_balance != null) setBalance(r.points_balance);
+    showBackupBannerIfDue(api);
+  },
 });
+
+// 計測が日付をまたいでいる間は、全ページで、右下に「計測が日付をまたいでいます」を出す(store/dayCrossing.js の状態から)
+startCrossingNotice({ getCrossing, subscribeCrossing });
+// 「またいでいる」状態が終わったとき(保存・リセット)は、開いている画面の斜線を消すため、静かに描き直す(クロスフェード)。
+// 始まるとき(日付が変わったとき)は、日付の見張りが、起動時処理のあとで描き直すので、ここでは何もしない(二重に描き直さない)。
+// 使っている最中(ポップアップ・入力中)は、描き直さない。そのときの画面は、次にタブを開いたときに新しくなる。
+subscribeCrossing((c) => { if (!c && viewIsIdle()) refreshActiveView().catch((e) => console.error(e)); });
 
 // 起動時のお知らせ: 初めてのときは、先に「はじめに」の案内を出し、閉じたあとで、バックアップのリマインダーを出す
 // (周期がたっていれば、右下に小さく出す。起動時に1回だけ。案内の上に重ならないようにする)。

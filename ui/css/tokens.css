@@ -53,3 +53,13 @@ html,body{height:100%;}
 html{scrollbar-gutter:stable;} /* スクロールバーの出現/消失で幅が変わらないよう、常に領域を確保する */
 body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--font-sans);}
 .mono{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+
+/* 「確定前」の斜線(components.css の .pend / チャートの帯)の濃さ。ライト・ダークで別々に調整できる。
+   line = 斜線の線の濃さ(ink 色)。
+   wash = 斜線の下に重ねる、背景色(--paper-rgb。ライトならライトの背景色、ダークならダークの背景色)のオーバーレイの濃さ。
+          下にある棒・文字・マスの色を、少し背景になじませて、斜線がどこでも同じ濃さに見えるようにする(文字は読める濃さまで)。 */
+:root{ --pend-line-a:.32; --pend-wash-a:.35; }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --pend-line-a:.32; --pend-wash-a:.35; }
+}
+:root[data-theme="dark"]{ --pend-line-a:.32; --pend-wash-a:.35; }

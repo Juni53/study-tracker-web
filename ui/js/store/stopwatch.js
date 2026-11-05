@@ -3,14 +3,9 @@
 // ここ(アプリ全体で1つだけのストア)が唯一の真実源になる。
 // サイドバー下部の表示とストップウォッチタブの両方が、このストアを購読する。
 
-function todayIso() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-function nowHHMM() {
-  const d = new Date();
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
+// 開始日・開始時刻は、共通の時計から(new Date() を直接使わない。テストで日付を固定でき、日付またぎの表示も確かめられる)。
+// 経過時間の計算(Date.now() の差分)は、時計の変更の影響を受けないよう、実際の時刻のままにしてある。
+import { todayIso, nowHHMM } from "../core/dates.js";
 
 const listeners = new Set();
 
@@ -216,8 +211,8 @@ function notify() {
 }
 
 // 計測の途中か(動いている、または、一時停止中で、まだ保存していない計測がある)。ポモドーロだけが動いているときも含む。
-// 再読み込みで失われるので、ブラウザの「このページを離れますか」の確認(components/leaveGuard.js)と、
-// 日付が変わったときの更新の保留(components/dayWatcher.js)に使う。
+// 再読み込みで失われるので、ブラウザの「このページを離れますか」の確認(components/leaveGuard.js)に使う。
+// (日付が変わったときの更新は、計測中でも保留しない。components/dayWatcher.js)
 export function hasActiveSession() {
   return stopwatch.running || stopwatch.pomodoro.running || stopwatch.startDate !== null;
 }

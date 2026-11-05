@@ -3,6 +3,8 @@
 // ここでは受け取った値を並べて描くだけ(棒の長さを最大値×1.15に正規化するところだけは描画上の処理)。
 // グラフは SVG ではなく幅100%の div の高さ/幅(%)で描くので、リサイズ時の再描画は要らない。
 
+import { pendingDates, pendClass, pendTitle, pendSr, PEND_LABEL } from "../components/pending.js";
+import { todayDateHtml } from "../components/todayDate.js";
 import { mountPoints } from "../components/points.js";
 import { staggerIn, visibleBlocks } from "../components/motion.js";
 
@@ -71,7 +73,7 @@ export async function render(root, api) {
   const alive = () => token === viewToken;
 
   root.innerHTML = `
-    <div class="top"><h1>統計</h1><div class="right"><span class="pts mono" id="stPts">…</span></div></div>
+    <div class="top"><h1>統計</h1><div class="right">${todayDateHtml()}<span class="pts mono" id="stPts">…</span></div></div>
 
     <div class="st-period" id="stPeriod">
       ${PERIODS.map((p) => `<button class="tbtn${p.key === period ? " active" : ""}" data-p="${p.key}" data-text="${p.label}">${p.label}</button>`).join("")}
@@ -167,6 +169,8 @@ export async function render(root, api) {
 
   function paintPanel(d) {
     const p = d.panel;
+    const pend = pendingDates();          // 計測が日付をまたいでいる間の、開始日(確定前)
+    const crossing = pend.length > 0;
     const todayY = new Date().getFullYear();
     let html = "";
 
@@ -176,9 +180,9 @@ export async function render(root, api) {
       if (p.elapsed_days > 1) { // 月曜の今日だけ、のときは「ここまで連続」と言っても意味が無いので出さない
         if (p.missing_dates.length === 0) {
           const sab = p.sabori_dates.length ? `(${p.sabori_dates.map((x) => fmtDate(x, todayY)).join(", ")}はさぼり券を使用)` : "";
-          info = `<div class="st-streak"><span class="dot live"></span><span>今週はここまでずっと連続記録中${sab}</span></div>`;
+          info = `<div class="st-streak${pendClass(crossing)}"${pendTitle(crossing)}><span class="dot live"></span><span>今週はここまでずっと連続記録中${sab}</span>${pendSr(crossing)}</div>`;
         } else {
-          info = `<div class="st-streak"><span class="dot idle"></span><span>今週は記録のない日があります: ${p.missing_dates.map((x) => fmtDate(x, todayY)).join(", ")}</span></div>`;
+          info = `<div class="st-streak${pendClass(crossing)}"${pendTitle(crossing)}><span class="dot idle"></span><span>今週は記録のない日があります: ${p.missing_dates.map((x) => fmtDate(x, todayY)).join(", ")}</span>${pendSr(crossing)}</div>`;
         }
       }
       const rows = p.rows.map((r) => {
@@ -188,10 +192,11 @@ export async function render(root, api) {
           return t ? `<span class="st-wk-tag" style="background:${t.color}"></span>` : "";
         }).join("");
         const width = r.minutes ? (r.minutes / scale) * 100 : 0;
-        const right = r.sabori ? `<div class="st-wk-m mono sabori">🎟 使用</div>`
-          : `<div class="st-wk-m mono">${r.minutes ? fmtHM(r.minutes) : "―"}</div>`;
+        const on = pend.includes(r.date);   // 確定前の日: 日付の行全体(日付・棒・タグ・時間)に、斜線
+        const right = r.sabori ? `<div class="st-wk-m mono sabori">🎟 使用${pendSr(on)}</div>`
+          : `<div class="st-wk-m mono">${r.minutes ? fmtHM(r.minutes) : "―"}${pendSr(on)}</div>`;
         return `
-          <div class="st-wk-row${r.is_today ? " today" : ""}">
+          <div class="st-wk-row${r.is_today ? " today" : ""}${pendClass(on)}"${pendTitle(on)}>
             <div class="st-wk-d mono"><b>${mm}/${dd}</b>${r.weekday}</div>
             <div><div class="st-bar-track"><div class="st-bar-fill" style="width:${width}%"></div></div><div class="st-wk-tags">${dots}</div></div>
             ${right}
@@ -203,19 +208,20 @@ export async function render(root, api) {
       const n = p.days.length;
       const bars = p.days.map((x) => {
         const h = x.minutes ? (x.minutes / scale) * 100 : 0;
-        const tip = `${pad2(p.month)}/${pad2(x.day)} ${x.minutes ? fmtHM(x.minutes) : (x.sabori ? "さぼり券" : "―")}`;
-        return `<div class="st-daybar${x.is_today ? " today" : ""}" title="${tip}"><div class="st-daybar-fill" style="height:${h}%"></div>${x.sabori ? '<span class="st-ticket">🎟</span>' : ""}</div>`;
+        const on = pend.includes(x.date);   // 確定前の日: その日の棒に、斜線
+        const tip = `${pad2(p.month)}/${pad2(x.day)} ${x.minutes ? fmtHM(x.minutes) : (x.sabori ? "さぼり券" : "―")}${on ? ` ・ ${PEND_LABEL}` : ""}`;
+        return `<div class="st-daybar${x.is_today ? " today" : ""}${pendClass(on)}"${on ? ' data-pending="true"' : ""} title="${tip}"><div class="st-daybar-fill" style="height:${h}%"></div>${x.sabori ? '<span class="st-ticket">🎟</span>' : ""}</div>`;
       }).join("");
       const labelDays = [1];
       for (let v = 5; v <= n; v += 5) labelDays.push(v);
       const labels = labelDays.map((v) => `<span style="left:${((v - 0.5) / n) * 100}%">${v}</span>`).join("");
       // この月に重なる連続記録を、すべて帯で示す(いま進行中のものは朱色、過去のものは薄いインク色)
       const seg = (p.streak_spans || [])
-        .map((sp) => `<div class="st-seg${sp.current ? "" : " past"}" title="${sp.days}日連続" style="left:${((sp.from - 1) / n) * 100}%; width:${((sp.to - sp.from + 1) / n) * 100}%"></div>`)
+        .map((sp) => `<div class="st-seg${sp.current ? `${pendClass(crossing)}` : " past"}" title="${sp.days}日連続${sp.current && crossing ? ` ・ ${PEND_LABEL}` : ""}" style="left:${((sp.from - 1) / n) * 100}%; width:${((sp.to - sp.from + 1) / n) * 100}%"></div>`)
         .join("");
       html = `
         <div class="sect-lbl">日別学習時間・${p.month}月</div>
-        <div class="st-streak">${streakLineHtml(d.streak, todayY)}</div>
+        <div class="st-streak${pendClass(crossing)}"${pendTitle(crossing)}>${streakLineHtml(d.streak, todayY)}${pendSr(crossing)}</div>
         ${pastStreakHtml(d.streak, todayY)}
         <div class="st-daychart">${bars}</div>
         <div class="st-daylabels">${labels}</div>

@@ -298,5 +298,19 @@
 .notice-card .nt-text{font-size:13px; font-weight:700; margin-bottom:4px; color:var(--ink);}
 .notice-card .nt-sub{font-size:11px; color:var(--ink-sub); line-height:1.6; margin-bottom:10px; overflow-wrap:anywhere;}
 .notice-card .nt-actions{display:flex; gap:8px;}
+/* 「保存すると変わる可能性がある(確定前)」の斜線(計測が日付をまたいでいる間。store/dayCrossing.js)。
+   数字・文字は読める濃さ。線の色は --ink-rgb なので、ダークテーマでは、自動で明るい線になる(線の色を反転)。
+   凡例の見本(.pend-swatch)も、同じ斜線。お知らせ(components/crossingNotice.js)の凡例に使う。 */
+.pend{position:relative;}
+.pend::after{content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    repeating-linear-gradient(135deg, rgba(var(--ink-rgb),var(--pend-line-a)) 0 1.5px, transparent 1.5px 6px),   /* 上: 斜線 */
+    rgba(var(--paper-rgb),var(--pend-wash-a));                                                                     /* 下: 背景色(ライト/ダークそれぞれの背景)のオーバーレイ */
+}
+/* 読み上げ用の文字(画面には出さない)。斜線の部分の「確定前」を、読み上げで伝える(components/pending.js) */
+.sr-only{position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; border:0;}
+.owned.pend{display:inline-block;}
+.pend-swatch{display:inline-block; flex:none; box-sizing:border-box; width:26px; height:12px; border:1px solid rgba(var(--ink-rgb),.35);}
+.notice-card .nt-legend{display:flex; align-items:center; gap:8px; font-size:11px; color:var(--ink-sub); line-height:1.5; margin:-2px 0 10px;}
 .data-note{font-size:11px; color:var(--ink-sub); margin:12px 0 6px;}
 .data-note:first-child{margin-top:0;}

@@ -1,4 +1,5 @@
 // Study Tracker v3 - 記録ログタブ(手動入力を統合)
+import { todayDateHtml } from "../components/todayDate.js";
 import { openSaveForm } from "../components/saveForm.js";
 import { tagChipsHtml, examChipsHtml, bindChipToggle, selectedChipIds, chipLabel } from "../components/pickers.js";
 import { mountPoints } from "../components/points.js";
@@ -25,7 +26,7 @@ export function onLeave() {}
 
 export async function render(root, api) {
   root.innerHTML = `
-    <div class="top"><h1>記録ログ</h1><div class="right"><span class="pts mono" id="ptsTop">…</span></div></div>
+    <div class="top"><h1>記録ログ</h1><div class="right">${todayDateHtml()}<span class="pts mono" id="ptsTop">…</span></div></div>
     <button class="add-btn" id="manualAddBtn">＋ 手動で追加</button>
 
     <div class="lock-note">タイトルはいつでも編集できます。タグ・試験の紐づけは、記録した当日のみ編集できます</div>

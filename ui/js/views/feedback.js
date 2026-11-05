@@ -1,7 +1,11 @@
 // Study Tracker v3 - フィードバックタブ(フォームの URL が設定されているときだけ、ナビに出る。config.js / core/feedback.js)
 // 3つ目の引数 { link } は、テスト用(ナビからは、渡さずに呼ばれる)。
 
+import { todayDateHtml } from "../components/todayDate.js";
 import { feedbackLink } from "../core/feedback.js";
+
+// 日付が変わっても、このタブは描き直さない(「今日」に依存する表示は、見出しの日付だけ。文字だけ入れ替わる)
+export const refreshOnDayChange = false;
 
 export function onLeave() {}
 
@@ -22,5 +26,5 @@ export async function render(root, api, { link = feedbackLink() } = {}) {
           : ""}記録や設定は、送られません。</div>
       </div>`
     : `<div class="sect"><div class="empty-note">フィードバックの宛先が設定されていません。</div></div>`;
-  root.innerHTML = `<div class="top"><h1>フィードバック</h1></div>${body}`;
+  root.innerHTML = `<div class="top"><h1>フィードバック</h1><div class="right">${todayDateHtml()}</div></div>${body}`;
 }

@@ -1,4 +1,5 @@
 // Study Tracker v3 - 設定タブ
+import { todayDateHtml } from "../components/todayDate.js";
 import { applyTheme, openExamAddFromGuide } from "../app.js";
 import { mountPoints } from "../components/points.js";
 import { showAlert, showConfirm, showChoice } from "../components/dialog.js";
@@ -44,7 +45,7 @@ export async function render(root, api) {
   let tags = await api.get_tags();
 
   root.innerHTML = `
-    <div class="top"><h1>設定</h1><div class="right"><span class="pts mono" id="ptsTop">…</span></div></div>
+    <div class="top"><h1>設定</h1><div class="right">${todayDateHtml()}<span class="pts mono" id="ptsTop">…</span></div></div>
 
     <div class="sect">
       <div class="sect-lbl">表示テーマ</div>

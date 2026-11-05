@@ -3,6 +3,8 @@
 // ここでは並べて描き、操作を API に渡すだけ。ポップアップ(購入・並び替え・削除・追加/編集)は
 // カレンダー/統計と同じ理由で body 直下に置く(#content の container-type の影響を避けるため)。
 
+import { isCrossing, pendClass, pendTitle, pendSr } from "../components/pending.js";
+import { todayDateHtml } from "../components/todayDate.js";
 import { celebrateAt } from "../components/celebrate.js";
 import { catmullRom2bezier } from "../components/chart.js";
 import { mountPoints, setBalance } from "../components/points.js";
@@ -58,7 +60,7 @@ export async function render(root, api) {
   const alive = () => token === viewToken;
 
   root.innerHTML = `
-    <div class="top"><h1>ショップ</h1><div class="right"><span class="pts mono" id="shPts">…</span></div></div>
+    <div class="top"><h1>ショップ</h1><div class="right">${todayDateHtml()}<span class="pts mono" id="shPts">…</span></div></div>
 
     <button class="add-btn" id="shAddBtn">＋ 報酬を追加</button>
 
@@ -199,7 +201,7 @@ export async function render(root, api) {
       : `<button class="btn primary" data-act="sabori">購入する</button>`;
     $("#shSabori").innerHTML = `
       <div class="sh-sabori-main">
-        <div class="sh-sabori-head"><span class="name">🎟 さぼり券</span><span class="owned mono">所持 ${s.owned}/${s.max}枚</span></div>
+        <div class="sh-sabori-head"><span class="name">🎟 さぼり券</span><span class="owned mono${pendClass(isCrossing())}"${pendTitle(isCrossing())}>所持 ${s.owned}/${s.max}枚${pendSr(isCrossing())}</span></div>
         <div class="sh-sabori-note">勉強の記録がなかった日(アプリを開いただけの日も)に自動で使われ、連続記録を守ります(最大${s.max}枚まで所持)</div>
       </div>
       <div class="sh-sabori-buy"><span class="unit mono">${s.price.toLocaleString()}P</span>${btn}</div>`;

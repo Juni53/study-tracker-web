@@ -604,7 +604,7 @@ test("試験管理タブ: openAddExam で、名前と日付が入った追加画
     // 画面の「＋ 試験を追加」ボタンは、今までどおり(空の名前・今日の日付)
     root.querySelector("#examAddBtn").click();
     assert.equal(val("#examName"), "");
-    const t = new Date();                                                      // (試験管理タブは、共通の時計ではなく、実際の今日を使う)
+    const t = NOW();                                                           // (試験管理タブの「今日」は、共通の時計。上で固定している)
     assert.deepEqual([val("#examY"), val("#examM"), val("#examD")], [String(t.getFullYear()), String(t.getMonth() + 1).padStart(2, "0"), String(t.getDate()).padStart(2, "0")]);
     examView.onLeave();
     assert.equal(examView.openAddExam({}), null, "離れたあとも、開ける");
@@ -670,7 +670,7 @@ test("設定ページ → 案内 → タグの選び: 本物の API で、選ん
 test("起動(app.js): 案内を先に出し、閉じたあとにバックアップのお知らせ。試験の追加も案内から呼べる", () => {
   const app = read("ui/js/app.js");
   const a = app.indexOf("showOnboardingIfFirst(api");
-  const b = app.indexOf("showBackupBannerIfDue(api);");
+  const b = app.indexOf("showBackupBannerIfDue(api);", a);   // 案内の呼び出しより後ろの出現(日付が変わったときの再判定 = onRolled も、同じ呼び出しを使うため)
   assert.ok(a > 0 && b > a, "案内より前に、バックアップのお知らせを出している");
   const between = app.slice(a - 40, b);
   assert.match(between, /await showOnboardingIfFirst/);
@@ -715,24 +715,29 @@ test("案内の「試しに追加」(app.js): 試験管理タブが開いて、�
 });
 
 test("案内 → 試験のページのボタン → 追加画面で保存 → 案内が同じページに戻り、ボタンは「追加しました」になる(本物の流れ)", async () => {
-  const app = await import("../ui/js/app.js");
-  await until(() => heading() === "ホーム", "ホーム");
-  const api = fakeApi({ done: true });
-  const p = showOnboarding(api, { first: false, onAddExam: app.openExamAddFromGuide });
-  await settle();
-  await next(4);
-  assert.equal(title(), "試験管理");
-  btn("exam").click();
-  await until(() => examBox("#examOverlay.open"), "追加画面");
-  assert.equal(anyOverlay(), null, "追加画面のあいだ、案内が隠れていない");
-  assert.equal(examBox("#examName").value, "二学期期末試験");
-  examBox("#examSaveBtn").click();
-  await until(() => overlay() && activeTab() === "home", "案内に戻る・元のタブへ戻る");
-  assert.equal(title(), "試験管理");
-  assert.equal(btn("exam").disabled, true);
-  assert.match(overlay().textContent, /追加しました/);
-  await app.navigate("exam");                                                  // 本当に、試験が登録されている
-  await until(() => document.querySelector("#content .exam-card .name")?.textContent === "二学期期末試験", "登録された試験");
-  await app.navigate("home");
-  await closeAll(); await p;
+  // 案内の「二学期期末試験 を追加」ボタンは、試験日(2026-11-24)を過ぎると出ない。実際の日付で動かすと、その日を過ぎたあとに落ちて、
+  // CI(公開の手順)が止まってしまうので、時計を固定する(試験管理タブの表示・追加は、実際の今日でも同じ結果になる)
+  const restoreClock = setClock(NOW);
+  try {
+    const app = await import("../ui/js/app.js");
+    await until(() => heading() === "ホーム", "ホーム");
+    const api = fakeApi({ done: true });
+    const p = showOnboarding(api, { first: false, onAddExam: app.openExamAddFromGuide });
+    await settle();
+    await next(4);
+    assert.equal(title(), "試験管理");
+    btn("exam").click();
+    await until(() => examBox("#examOverlay.open"), "追加画面");
+    assert.equal(anyOverlay(), null, "追加画面のあいだ、案内が隠れていない");
+    assert.equal(examBox("#examName").value, "二学期期末試験");
+    examBox("#examSaveBtn").click();
+    await until(() => overlay() && activeTab() === "home", "案内に戻る・元のタブへ戻る");
+    assert.equal(title(), "試験管理");
+    assert.equal(btn("exam").disabled, true);
+    assert.match(overlay().textContent, /追加しました/);
+    await app.navigate("exam");                                                  // 本当に、試験が登録されている
+    await until(() => document.querySelector("#content .exam-card .name")?.textContent === "二学期期末試験", "登録された試験");
+    await app.navigate("home");
+    await closeAll(); await p;
+  } finally { restoreClock(); }
 });
